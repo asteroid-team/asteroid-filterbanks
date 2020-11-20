@@ -1,5 +1,5 @@
 <div align="center">
-<img src="docs/source/_static/images/asteroid_logo_dark.png" width="50%">
+<img src=".github/asteroid_logo_dark.png" width="50%">
 
 **Asteroid filterbanks.**
 
