@@ -2,8 +2,8 @@
 <img src=".github/asteroid_logo_dark.png" width="50%">
 
 
-[![PyPI Status](https://badge.fury.io/py/asteroid.svg)](https://badge.fury.io/py/asteroid)
-[![Build Status](https://github.com/mpariente/asteroid/workflows/CI/badge.svg)](https://github.com/mpariente/asteroid/actions?query=workflow%3ACI+branch%3Amaster+event%3Apush)
+[![PyPI Status](https://badge.fury.io/py/asteroid-filterbanks.svg)](https://badge.fury.io/py/asteroid-filterbanks)
+[![Build Status](https://github.com/mpariente/asteroid-filterbanks/workflows/CI/badge.svg)](https://github.com/mpariente/asteroid-filterbanks/actions?query=workflow%3ACI+branch%3Amaster+event%3Apush)
 [![codecov][codecov-badge]][codecov]
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Documentation Status](https://img.shields.io/badge/docs-0.3.3-blue)](https://asteroid.readthedocs.io/en/v0.3.3/)
@@ -17,16 +17,9 @@
 <h3 align="center">
 <p>Asteroid Filterbanks.
 </h3>
-
 </div>
 
 --------------------------------------------------------------------------------
-
-## TODO
-- PyPI
-- Docs building in main repo
-
-
 ## Install
 Latest release using pip:
 ```bash
@@ -39,8 +32,6 @@ git clone https://github.com/asteroid-team/asteroid-filterbanks
 cd asteroid-filterbanks
 pip install -e .["all"]
 ```
-
-
 
 ## Citing Asteroid
 ```BibTex
