@@ -8,6 +8,9 @@ from .multiphase_gammatone_fb import MultiphaseGammatoneFB
 from .melgram_fb import MelGramFB
 
 
+__version__ = "0.0.1"
+
+
 def make_enc_dec(
     fb_name,
     n_filters,
