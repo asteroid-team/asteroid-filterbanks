@@ -6,4 +6,4 @@ exclude_lines =
   raise NotImplementedError
 
 [run]
-source=asteroid-filterbanks
+source=asteroid_filterbanks
