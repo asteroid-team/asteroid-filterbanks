@@ -1,7 +1,6 @@
 <div align="center">
 <img src=".github/asteroid_logo_dark.png" width="50%">
 
-**Asteroid filterbanks.**
 
 [![PyPI Status](https://badge.fury.io/py/asteroid.svg)](https://badge.fury.io/py/asteroid)
 [![Build Status](https://github.com/mpariente/asteroid/workflows/CI/badge.svg)](https://github.com/mpariente/asteroid/actions?query=workflow%3ACI+branch%3Amaster+event%3Apush)
@@ -15,13 +14,31 @@
 [![Python Versions](https://img.shields.io/pypi/pyversions/asteroid.svg)](https://pypi.org/project/asteroid/)
 [![Slack][slack-badge]][slack-invite]
 
+<h3 align="center">
+<p>Asteroid Filterbanks.
+</h3>
+
 </div>
 
 --------------------------------------------------------------------------------
+
 ## TODO
 - PyPI
-- Most CI here
 - Docs building in main repo
+
+
+## Install
+Latest release using pip:
+```bash
+pip install asteroid-filterbanks
+```
+
+Dev install
+```bash
+git clone https://github.com/asteroid-team/asteroid-filterbanks
+cd asteroid-filterbanks
+pip install -e .["all"]
+```
 
 
 
