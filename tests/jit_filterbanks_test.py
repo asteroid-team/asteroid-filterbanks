@@ -47,8 +47,8 @@ class DummyModel(torch.nn.Module):
         )
         self.encoder = encoder
         self.decoder = decoder
-        
+
     def forward(self, wav):
         tf_rep = self.encoder(wav)
-        wav_back = self.decoder(wav)
+        wav_back = self.decoder(tf_rep)
         return wav_back
