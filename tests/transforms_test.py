@@ -4,7 +4,7 @@ import torch
 from torch.testing import assert_allclose
 import numpy as np
 
-from asteroid import filterbanks as fb
+import asteroid_filterbanks as fb
 from asteroid_filterbanks import transforms
 
 

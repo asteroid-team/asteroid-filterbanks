@@ -1,7 +1,7 @@
 import torch
 from torch.testing import assert_allclose
 import pytest
-from asteroid_filterbanks.griffim_lim import mixture_consistency
+from asteroid_filterbanks.griffin_lim import mixture_consistency
 
 
 @pytest.mark.parametrize("mix_shape", [[2, 1600], [2, 130, 10]])
