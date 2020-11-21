@@ -44,6 +44,10 @@ class Filterbank(nn.Module):
         """Apply transform before decoder transposed convolution."""
         return spec
 
+    def post_synthesis(self, wav: torch.Tensor):
+        """Apply transform after decoder transposed convolution."""
+        return wav
+
     def get_config(self):
         """ Returns dictionary of arguments to re-instantiate the class. """
         config = {
@@ -265,13 +269,14 @@ class Decoder(_EncDec):
         """
         filters = self.get_filters()
         spec = self.filterbank.pre_synthesis(spec)
-        return multishape_conv_transpose1d(
+        wav = multishape_conv_transpose1d(
             spec,
             filters,
             stride=self.stride,
             padding=self.padding,
             output_padding=self.output_padding,
         )
+        return self.filterbank.post_synthesis(wav)
 
 
 @script_if_tracing
