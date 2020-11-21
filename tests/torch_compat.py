@@ -48,9 +48,12 @@ if __name__ == "__main__":
     window = torch.ones(kernel_size)  # / 2**0.5
 
     fb = TorchSTFT(
-        n_filters=kernel_size, kernel_size=kernel_size, stride=stride, window=window.data.numpy()
+        n_filters=kernel_size,
+        kernel_size=kernel_size,
+        stride=stride,
+        window=None,  # window.data.numpy()
     )
-    # window = torch.from_numpy(fb.window)
+    window = torch.from_numpy(fb.window)
     enc = Encoder(fb)
     dec = Decoder(fb)
 
@@ -62,14 +65,14 @@ if __name__ == "__main__":
         center=False,
         window=window,
     )
-    wav_back = torch.istft(
-        spec,
-        n_fft=kernel_size,
-        hop_length=stride,
-        win_length=kernel_size,
-        window=window,
-        center=False,
-    )
+    # wav_back = torch.istft(
+    #     spec,
+    #     n_fft=kernel_size,
+    #     hop_length=stride,
+    #     win_length=kernel_size,
+    #     window=window,
+    #     center=False,
+    # )
 
     spec = to_asteroid(spec.float())
     asteroid_spec = enc(wav)
