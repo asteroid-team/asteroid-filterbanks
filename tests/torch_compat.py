@@ -27,14 +27,14 @@ def to_asteroid(x):
 
 class TorchSTFT(STFTFB):
     def post_analysis(self, spec):
-        spec[..., 0, :] *= 2  # np.sqrt(2)
-        spec[..., self.n_filters // 2, :] *= 2  # np.sqrt(2)
+        spec[..., 0, :] *= np.sqrt(2)
+        spec[..., self.n_filters // 2, :] *= np.sqrt(2)
         return spec * (self.kernel_size // 2) ** 0.5
 
-    def pre_synthesis(self, spec):
-        spec[..., 0, :] /= np.sqrt(2)
-        spec[..., self.n_filters // 2, :] /= np.sqrt(2)
-        return spec // (self.kernel_size // 2) ** 0.5
+    # def pre_synthesis(self, spec):
+    #     spec[..., 0, :] /= np.sqrt(2)
+    #     spec[..., self.n_filters // 2, :] /= np.sqrt(2)
+    #     return spec // (self.kernel_size // 2) ** 0.5
 
 
 if __name__ == "__main__":
