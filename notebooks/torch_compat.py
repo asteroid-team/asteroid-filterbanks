@@ -1,3 +1,4 @@
+import warnings
 from typing import List
 
 import torch
@@ -76,9 +77,8 @@ class TorchSTFT(STFTFB):
         # center=0, normalized=0, onesided=1, length=16000)window overlap add min: 0
 
         n_frame = 1 + (wav.shape[-1] - self.kernel_size) // self.stride
-        # TODO: register buffer
         wsq_ola = square_ola(
-            torch.from_numpy(self.window),
+            torch.from_numpy(self.torch_window),
             kernel_size=self.kernel_size,
             stride=self.stride,
             n_frame=n_frame,
@@ -86,19 +86,17 @@ class TorchSTFT(STFTFB):
         view_shape = [1 for _ in wav.shape[:-1]] + [-1]
         wsq_ola = wsq_ola.view(view_shape)
 
-        # we need to trim the front padding away if center
         start = self.kernel_size // 2 if self.center else 0
-        end = -self.kernel_size // 2  # if self.center
+        wav = wav[..., start:]
+        wsq_ola = wsq_ola[..., start:]
 
-        wav = wav[..., start:end]
-        wsq_ola = wsq_ola[..., start:end]
-
-        min_ola = wsq_ola.abs().min()
-        if min_ola < torch.finfo(wav.dtype).eps:
-            raise RuntimeError(
-                f"Minimum NOLA should be above {torch.finfo(wav.dtype).eps}, Found {min_ola}."
+        min_mask = wsq_ola.abs() < 1e-11
+        if min_mask.any():
+            # Warning instead of error. Might be trimmed afterward.
+            warnings.warn(
+                f"Minimum NOLA should be above 1e-11, Found {wsq_ola.abs().min()}. Dividind only where possible."
             )
-        wav = wav / wsq_ola
+        wav[~min_mask] = wav[~min_mask] / wsq_ola[~min_mask]
         return wav
 
 
@@ -112,7 +110,7 @@ if __name__ == "__main__":
         stride = kernel_size // 2
 
         # window = torch.ones(kernel_size) / 2 ** 0.5
-        window = torch.hann_window(kernel_size)
+        window = 0.001 * torch.hann_window(kernel_size) ** 0.85
 
         fb = TorchSTFT(
             n_filters=kernel_size,
@@ -140,13 +138,12 @@ if __name__ == "__main__":
             win_length=kernel_size,
             window=window,
             center=center,
-            # length=wav.shape[0],
+            length=wav.shape[0],
         )
-
         spec = to_asteroid(spec.float())
         asteroid_spec = enc(wav)
-        asteroid_wavback = dec(asteroid_spec)
-
+        asteroid_wavback = dec(asteroid_spec, length=wav.shape[0])
+        #
         assert_allclose(spec, asteroid_spec)
         assert_allclose(wav_back, asteroid_wavback)
 
