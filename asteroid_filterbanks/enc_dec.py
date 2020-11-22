@@ -187,6 +187,7 @@ class Encoder(_EncDec):
             filters=filters,
             stride=self.stride,
             padding=self.padding,
+            pad_mode=self.pad_mode,
             as_conv1d=self.as_conv1d,
         )
         return self.filterbank.post_analysis(spec)
@@ -194,6 +195,8 @@ class Encoder(_EncDec):
 
 @script_if_tracing
 def pad_all_shapes(x: torch.Tensor, pad_shape: List[int], mode: str = "reflect") -> torch.Tensor:
+    if not pad_shape:
+        return x
     if x.ndim < 3:
         return F.pad(x[None, None], pad=pad_shape, mode=mode).squeeze(0).squeeze(0)
     return F.pad(x, pad=pad_shape, mode=mode)
@@ -212,7 +215,8 @@ def multishape_conv1d(
     if waveform.ndim == 1:
         # Assumes 1D input with shape (time,)
         # Output will be (freq, conv_time)
-        return F.conv1d(waveform[None, None], filters, stride=stride, padding=padding).squeeze()
+        # return F.conv1d(waveform[None, None], filters, stride=stride, padding=padding).squeeze()
+        return F.conv1d(waveform[None, None], filters, stride=stride).squeeze()
     elif waveform.ndim == 2:
         # Assume 2D input with shape (batch or channels, time)
         # Output will be (batch or channels, freq, conv_time)
@@ -224,23 +228,27 @@ def multishape_conv1d(
             "to avoid it. For example, this can be done with "
             "input_tensor.unsqueeze(1)."
         )
-        return F.conv1d(waveform.unsqueeze(1), filters, stride=stride, padding=padding)
+        # return F.conv1d(waveform.unsqueeze(1), filters, stride=stride, padding=padding)
+        return F.conv1d(waveform.unsqueeze(1), filters, stride=stride)
     elif waveform.ndim == 3:
         batch, channels, time_len = waveform.shape
         if channels == 1 and as_conv1d:
             # That's the common single channel case (batch, 1, time)
             # Output will be (batch, freq, stft_time), behaves as Conv1D
-            return F.conv1d(waveform, filters, stride=stride, padding=padding)
+            return F.conv1d(waveform, filters, stride=stride)
+            # return F.conv1d(waveform, filters, stride=stride, padding=padding)
         else:
             # Return batched convolution, input is (batch, 3, time), output will be
             # (b, 3, f, conv_t). Useful for multichannel transforms. If as_conv1d is
             # false, (batch, 1, time) will output (batch, 1, freq, conv_time), useful for
             # consistency.
-            return batch_packed_1d_conv(waveform, filters, stride=stride, padding=padding)
+            return batch_packed_1d_conv(waveform, filters, stride=stride)
+            # return batch_packed_1d_conv(waveform, filters, stride=stride, padding=padding)
     else:  # waveform.ndim > 3
         # This is to compute "multi"multichannel convolution.
         # Input can be (*, time), output will be (*, freq, conv_time)
-        return batch_packed_1d_conv(waveform, filters, stride=stride, padding=padding)
+        # return batch_packed_1d_conv(waveform, filters, stride=stride, padding=padding)
+        return batch_packed_1d_conv(waveform, filters, stride=stride)
 
 
 def batch_packed_1d_conv(
@@ -262,7 +270,7 @@ class Decoder(_EncDec):
     Args:
         filterbank (:class:`Filterbank`): The filterbank to use as an decoder.
         is_pinv (bool): Whether to be the pseudo inverse of filterbank.
-        padding (Union[int, List[int]]): Zero-padding added to both sides of the input.
+        padding (int): Zero-padding added to both sides of the input.
         output_padding (int): Additional size added to one side of the
             output shape.
 
@@ -273,13 +281,14 @@ class Decoder(_EncDec):
     def __init__(self, filterbank, is_pinv=False, center=False, padding=0, output_padding=0):
         super().__init__(filterbank, is_pinv=is_pinv)
         self.center = center
-        if padding and center:
-            warnings.warn(f"Found `center=True` and `padding={padding}`. Padding takes precedence.")
-            self.padding = padding
-        elif center:
-            self.padding = [self.filterbank.kernel_size // 2, self.filterbank.kernel_size // 2]
-        else:
-            self.padding = padding
+        self.padding = padding
+        # if padding and center:
+        #     warnings.warn(f"Found `center=True` and `padding={padding}`. Padding takes precedence.")
+        #     self.padding = padding
+        # elif center:
+        #     self.padding = [self.filterbank.kernel_size // 2, self.filterbank.kernel_size // 2]
+        # else:
+        #     self.padding = padding
         self.output_padding = output_padding
 
     @classmethod
@@ -311,7 +320,10 @@ class Decoder(_EncDec):
             padding=self.padding,
             output_padding=self.output_padding,
         )
+
         wav = self.filterbank.post_synthesis(wav)
+        start = self.filterbank.kernel_size // 2 if self.center else 0
+        wav = wav[..., start:]
         if length is not None:
             length = min(length, wav.shape[-1])
             return wav[:length]

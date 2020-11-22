@@ -50,12 +50,12 @@ class TorchSTFT(STFTFB):
         self.center = center
         self.normalize = normalize
 
-    def pre_analysis(self, wav):
-        if not self.center:
-            return wav
-        pad_shape = [self.kernel_size // 2, self.kernel_size // 2]
-        wav = pad_all_shapes(wav, pad_shape=pad_shape, mode="reflect")
-        return wav
+    # def pre_analysis(self, wav):
+    #     if not self.center:
+    #         return wav
+    #     pad_shape = [self.kernel_size // 2, self.kernel_size // 2]
+    #     wav = pad_all_shapes(wav, pad_shape=pad_shape, mode="reflect")
+    #     return wav
 
     def post_analysis(self, spec):
         spec[..., 0, :] *= np.sqrt(2)
@@ -78,7 +78,7 @@ class TorchSTFT(STFTFB):
 
         n_frame = 1 + (wav.shape[-1] - self.kernel_size) // self.stride
         wsq_ola = square_ola(
-            torch.from_numpy(self.torch_window),
+            self.torch_window,
             kernel_size=self.kernel_size,
             stride=self.stride,
             n_frame=n_frame,
@@ -86,9 +86,9 @@ class TorchSTFT(STFTFB):
         view_shape = [1 for _ in wav.shape[:-1]] + [-1]
         wsq_ola = wsq_ola.view(view_shape)
 
-        start = self.kernel_size // 2 if self.center else 0
-        wav = wav[..., start:]
-        wsq_ola = wsq_ola[..., start:]
+        # start = self.kernel_size // 2 if self.center else 0
+        # wav = wav[..., start:]
+        # wsq_ola = wsq_ola[..., start:]
 
         min_mask = wsq_ola.abs() < 1e-11
         if min_mask.any():
@@ -111,7 +111,7 @@ if __name__ == "__main__":
         stride = kernel_size // 2
 
         # window = torch.ones(kernel_size) / 2 ** 0.5
-        window = 0.001 * torch.hann_window(kernel_size) ** 0.85
+        window = torch.hann_window(kernel_size)
 
         fb = TorchSTFT(
             n_filters=kernel_size,
@@ -121,8 +121,8 @@ if __name__ == "__main__":
             center=center,
         )
         # window = torch.from_numpy(fb.window)
-        enc = Encoder(fb)
-        dec = Decoder(fb)
+        enc = Encoder(fb, center=center)
+        dec = Decoder(fb, center=center)
 
         spec = torch.stft(
             wav.squeeze(),
