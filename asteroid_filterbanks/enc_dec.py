@@ -36,6 +36,10 @@ class Filterbank(nn.Module):
         """ Abstract method for filters. """
         raise NotImplementedError
 
+    def pre_analysis(self, wav: torch.Tensor):
+        """Apply transform before encoder convolution."""
+        return wav
+
     def post_analysis(self, spec: torch.Tensor):
         """Apply transform to encoder convolution."""
         return spec
@@ -164,6 +168,7 @@ class Encoder(_EncDec):
             >>> (batch, any, dim, time) --> (batch, any, dim, freq, conv_time)
         """
         filters = self.get_filters()
+        waveform = self.filterbank.pre_analysis(waveform)
         spec = multishape_conv1d(
             waveform,
             filters=filters,
