@@ -1,5 +1,9 @@
+from typing import List
+
 import torch
+import torch.nn.functional as F
 from asteroid_filterbanks import Filterbank, STFTFB, Encoder, Decoder
+from asteroid_filterbanks.scripting import script_if_tracing
 from asteroid_filterbanks.transforms import mag
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,14 +29,33 @@ def to_asteroid(x):
     return torch.cat([x[..., 0], x[..., 1]], dim=-2)
 
 
-def square_ola(window, kernel_size, stride, n_frame):
+def square_ola(window: torch.Tensor, kernel_size: int, stride: int, n_frame: int) -> torch.Tensor:
     window_sq = window.pow(2).view(1, -1, 1).repeat(1, 1, n_frame)
     return torch.nn.functional.fold(
         window_sq, (1, (n_frame - 1) * stride + kernel_size), (1, kernel_size), stride=(1, stride)
     ).squeeze(2)
 
 
+@script_if_tracing
+def pad_all_shapes(x: torch.Tensor, pad_shape: List[int], mode: str = "reflect") -> torch.Tensor:
+    if x.ndim < 3:
+        return F.pad(x[None, None], pad=pad_shape, mode=mode).squeeze(0).squeeze(0)
+    return F.pad(x, pad=pad_shape, mode=mode)
+
+
 class TorchSTFT(STFTFB):
+    def __init__(self, *args, center=True, normalize=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.center = center
+        self.normalize = normalize
+
+    def pre_analysis(self, wav):
+        if not self.center:
+            return wav
+        pad_shape = [self.kernel_size // 2, self.kernel_size // 2]
+        wav = pad_all_shapes(wav, pad_shape=pad_shape, mode="reflect")
+        return wav
+
     def post_analysis(self, spec):
         spec[..., 0, :] *= np.sqrt(2)
         spec[..., self.n_filters // 2, :] *= np.sqrt(2)
@@ -76,16 +99,20 @@ if __name__ == "__main__":
     from torch.testing import assert_allclose
 
     wav = torch.randn(16000)
+    center = True
     for kernel_size in [16, 32, 64, 128, 256, 512]:
+        print(kernel_size)
         stride = kernel_size // 2
 
-        window = torch.ones(kernel_size) / 2 ** 0.5
+        # window = torch.ones(kernel_size) / 2 ** 0.5
+        window = torch.hann_window(kernel_size)
 
         fb = TorchSTFT(
             n_filters=kernel_size,
             kernel_size=kernel_size,
             stride=stride,
             window=window.data.numpy(),
+            center=center,
         )
         # window = torch.from_numpy(fb.window)
         enc = Encoder(fb)
@@ -96,7 +123,7 @@ if __name__ == "__main__":
             n_fft=kernel_size,
             hop_length=stride,
             win_length=kernel_size,
-            center=False,
+            center=center,
             window=window,
         )
         # wav_back = torch.istft(
@@ -105,13 +132,13 @@ if __name__ == "__main__":
         #     hop_length=stride,
         #     win_length=kernel_size,
         #     window=window,
-        #     center=False,
+        #     center=center,
         #     length=wav.shape[0],
         # )
 
         spec = to_asteroid(spec.float())
         asteroid_spec = enc(wav)
-        asteroid_wavback = dec(asteroid_spec)
+        # asteroid_wavback = dec(asteroid_spec)
 
         assert_allclose(spec, asteroid_spec)
         # assert_allclose(wav_back, asteroid_wavback)
