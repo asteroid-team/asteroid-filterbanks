@@ -94,7 +94,8 @@ class TorchSTFT(STFTFB):
         if min_mask.any():
             # Warning instead of error. Might be trimmed afterward.
             warnings.warn(
-                f"Minimum NOLA should be above 1e-11, Found {wsq_ola.abs().min()}. Dividind only where possible."
+                f"Minimum NOLA should be above 1e-11, Found {wsq_ola.abs().min()}. "
+                f"Dividind only where possible."
             )
         wav[~min_mask] = wav[~min_mask] / wsq_ola[~min_mask]
         return wav
