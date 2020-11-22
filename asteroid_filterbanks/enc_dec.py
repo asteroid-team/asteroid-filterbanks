@@ -1,4 +1,5 @@
 import warnings
+from typing import List, Union
 from typing import Optional
 import torch
 from torch import nn
@@ -130,15 +131,26 @@ class Encoder(_EncDec):
             If True (default), forwarding input with shape (batch, 1, time)
             will output a tensor of shape (batch, freq, conv_time).
             If False, will output a tensor of shape (batch, 1, freq, conv_time).
-        padding (int): Zero-padding added to both sides of the input.
+        padding (Union[int, List[int]): Zero-padding added to both sides of the input.
+        pad_mode (str): See torch.nn.functional.pad.
 
     """
 
-    def __init__(self, filterbank, is_pinv=False, as_conv1d=True, padding=0):
+    def __init__(
+        self, filterbank, is_pinv=False, as_conv1d=True, center=False, padding=0, pad_mode="reflect"
+    ):
         super(Encoder, self).__init__(filterbank, is_pinv=is_pinv)
         self.as_conv1d = as_conv1d
+        self.center = center
+        if padding and center:
+            warnings.warn(f"Found `center=True` and `padding={padding}`. Padding takes precedence.")
+            self.padding = padding
+        elif center:
+            self.padding = [self.filterbank.kernel_size // 2, self.filterbank.kernel_size // 2]
+        else:
+            self.padding = padding
+        self.pad_mode = pad_mode
         self.n_feats_out = self.filterbank.n_feats_out
-        self.padding = padding
 
     @classmethod
     def pinv_of(cls, filterbank, **kwargs):
@@ -181,13 +193,22 @@ class Encoder(_EncDec):
 
 
 @script_if_tracing
+def pad_all_shapes(x: torch.Tensor, pad_shape: List[int], mode: str = "reflect") -> torch.Tensor:
+    if x.ndim < 3:
+        return F.pad(x[None, None], pad=pad_shape, mode=mode).squeeze(0).squeeze(0)
+    return F.pad(x, pad=pad_shape, mode=mode)
+
+
+@script_if_tracing
 def multishape_conv1d(
     waveform: torch.Tensor,
     filters: torch.Tensor,
     stride: int,
-    padding: int = 0,
+    padding: Union[int, List[int]] = 0,
+    pad_mode: str = "constant",
     as_conv1d: bool = True,
 ) -> torch.Tensor:
+    waveform = pad_all_shapes(x=waveform, pad_shape=padding, mode=pad_mode)
     if waveform.ndim == 1:
         # Assumes 1D input with shape (time,)
         # Output will be (freq, conv_time)
@@ -241,7 +262,7 @@ class Decoder(_EncDec):
     Args:
         filterbank (:class:`Filterbank`): The filterbank to use as an decoder.
         is_pinv (bool): Whether to be the pseudo inverse of filterbank.
-        padding (int): Zero-padding added to both sides of the input.
+        padding (Union[int, List[int]]): Zero-padding added to both sides of the input.
         output_padding (int): Additional size added to one side of the
             output shape.
 
@@ -249,9 +270,16 @@ class Decoder(_EncDec):
         F.conv_transpose1d.
     """
 
-    def __init__(self, filterbank, is_pinv=False, padding=0, output_padding=0):
+    def __init__(self, filterbank, is_pinv=False, center=False, padding=0, output_padding=0):
         super().__init__(filterbank, is_pinv=is_pinv)
-        self.padding = padding
+        self.center = center
+        if padding and center:
+            warnings.warn(f"Found `center=True` and `padding={padding}`. Padding takes precedence.")
+            self.padding = padding
+        elif center:
+            self.padding = [self.filterbank.kernel_size // 2, self.filterbank.kernel_size // 2]
+        else:
+            self.padding = padding
         self.output_padding = output_padding
 
     @classmethod
