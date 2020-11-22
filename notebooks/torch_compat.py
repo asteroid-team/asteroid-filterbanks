@@ -86,6 +86,13 @@ class TorchSTFT(STFTFB):
         view_shape = [1 for _ in wav.shape[:-1]] + [-1]
         wsq_ola = wsq_ola.view(view_shape)
 
+        # we need to trim the front padding away if center
+        start = self.kernel_size // 2 if self.center else 0
+        end = -self.kernel_size // 2  # if self.center
+
+        wav = wav[..., start:end]
+        wsq_ola = wsq_ola[..., start:end]
+
         min_ola = wsq_ola.abs().min()
         if min_ola < torch.finfo(wav.dtype).eps:
             raise RuntimeError(
@@ -126,22 +133,22 @@ if __name__ == "__main__":
             center=center,
             window=window,
         )
-        # wav_back = torch.istft(
-        #     spec,
-        #     n_fft=kernel_size,
-        #     hop_length=stride,
-        #     win_length=kernel_size,
-        #     window=window,
-        #     center=center,
-        #     length=wav.shape[0],
-        # )
+        wav_back = torch.istft(
+            spec,
+            n_fft=kernel_size,
+            hop_length=stride,
+            win_length=kernel_size,
+            window=window,
+            center=center,
+            # length=wav.shape[0],
+        )
 
         spec = to_asteroid(spec.float())
         asteroid_spec = enc(wav)
-        # asteroid_wavback = dec(asteroid_spec)
+        asteroid_wavback = dec(asteroid_spec)
 
         assert_allclose(spec, asteroid_spec)
-        # assert_allclose(wav_back, asteroid_wavback)
+        assert_allclose(wav_back, asteroid_wavback)
 
     # plt.plot(wav.numpy(), "r")
     # plt.plot(asteroid_wavback.numpy(), "b+")
