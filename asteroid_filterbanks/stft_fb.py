@@ -58,6 +58,7 @@ class STFTFB(Filterbank):
         filters[n_filters // 2, :] /= np.sqrt(2)
         filters = torch.from_numpy(filters * self.window).unsqueeze(1).float()
         self.register_buffer("_filters", filters)
+        self.register_buffer("torch_window", torch.from_numpy(self.window))
 
     def filters(self):
         return self._filters
