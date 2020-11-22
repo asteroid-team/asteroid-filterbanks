@@ -1,4 +1,5 @@
 import warnings
+from typing import Optional
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -261,7 +262,7 @@ class Decoder(_EncDec):
         elif isinstance(filterbank, Encoder):
             return cls(filterbank.filterbank, is_pinv=True)
 
-    def forward(self, spec) -> torch.Tensor:
+    def forward(self, spec, length: Optional[int] = None) -> torch.Tensor:
         """Applies transposed convolution to a TF representation.
 
         This is equivalent to overlap-add.
@@ -269,6 +270,7 @@ class Decoder(_EncDec):
         Args:
             spec (:class:`torch.Tensor`): 3D or 4D Tensor. The TF
                 representation. (Output of :func:`Encoder.forward`).
+            length: desired output length.
         Returns:
             :class:`torch.Tensor`: The corresponding time domain signal.
         """
@@ -281,7 +283,11 @@ class Decoder(_EncDec):
             padding=self.padding,
             output_padding=self.output_padding,
         )
-        return self.filterbank.post_synthesis(wav)
+        wav = self.filterbank.post_synthesis(wav)
+        if length is not None:
+            length = min(length, wav.shape[-1])
+            return wav[:length]
+        return wav
 
 
 @script_if_tracing
