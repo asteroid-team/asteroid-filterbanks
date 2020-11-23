@@ -37,7 +37,7 @@ jobs:
 
     - name: Source code tests
       run: |
-        coverage run -a -m py.test tests
+        coverage run -a -m py.test tests --ignore tests/torch_stft_test.py
 
     - name: Coverage report
       run: |

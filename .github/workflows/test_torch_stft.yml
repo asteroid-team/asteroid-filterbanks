@@ -6,7 +6,7 @@ on: [push, pull_request]
 
 jobs:
   src-test:
-    name: unit-tests
+    name: torch.stft consistency
     runs-on: ubuntu-latest
     strategy:
       matrix:
