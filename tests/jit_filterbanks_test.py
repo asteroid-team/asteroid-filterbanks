@@ -2,11 +2,41 @@ import torch
 import pytest
 from torch.testing import assert_allclose
 from asteroid_filterbanks import make_enc_dec
+from asteroid_filterbanks.torch_stft_fb import TorchSTFTFB
 
 
 @pytest.mark.parametrize(
     "filter_bank_name",
-    ("free", "stft", "analytic_free", "param_sinc"),
+    ("free", "stft", "analytic_free", "param_sinc", TorchSTFTFB),
+)
+@pytest.mark.parametrize(
+    "inference_data",
+    (
+        (torch.rand(240) - 0.5) * 2,
+        (torch.rand(1, 220) - 0.5) * 2,
+        (torch.rand(4, 256) - 0.5) * 2,
+        (torch.rand(1, 3, 312) - 0.5) * 2,
+        (torch.rand(3, 2, 128) - 0.5) * 2,
+        (torch.rand(1, 1, 3, 212) - 0.5) * 2,
+        (torch.rand(2, 4, 3, 128) - 0.5) * 2,
+    ),
+)
+def test_jit_filterbanks_enc(filter_bank_name, inference_data):
+    enc, _ = make_enc_dec(filter_bank_name, n_filters=32, kernel_size=16)
+
+    inputs = ((torch.rand(1, 200) - 0.5) * 2,)
+    traced = torch.jit.trace(enc, inputs)
+    with torch.no_grad():
+        res = enc(inference_data)
+        out = traced(inference_data)
+        print(traced.code_with_constants)
+        print(traced.code)
+        assert_allclose(res, out)
+
+
+@pytest.mark.parametrize(
+    "filter_bank_name",
+    ("free", "stft", "analytic_free", "param_sinc", TorchSTFTFB),
 )
 @pytest.mark.parametrize(
     "inference_data",
@@ -29,6 +59,8 @@ def test_jit_filterbanks(filter_bank_name, inference_data):
     with torch.no_grad():
         res = model(inference_data)
         out = traced(inference_data)
+        print(traced.code_with_constants)
+        print(traced.code)
         assert_allclose(res, out)
 
 
