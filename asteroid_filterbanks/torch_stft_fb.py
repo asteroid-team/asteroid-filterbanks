@@ -96,15 +96,13 @@ class TorchSTFTFB(STFTFB):
 
     def post_analysis(self, spec):
         """Correct the scale to match torch.stft."""
-        spec[..., 0, :] *= np.sqrt(2)
-        spec[..., self.n_filters // 2, :] *= np.sqrt(2)
+        spec = _restore_freqs_an(spec, n_filters=self.n_filters)
         return spec * 0.5 * (self.kernel_size * self.n_filters / self.stride) ** 0.5
 
     def pre_synthesis(self, spec):
         """Correct the scale to match what's expected by torch.istft."""
         spec = spec.clone()
-        spec[..., 0, :] /= np.sqrt(2)
-        spec[..., self.n_filters // 2, :] /= np.sqrt(2)
+        spec = _restore_freqs_syn(spec, n_filters=self.n_filters)
         return spec / ((self.stride * self.n_filters / self.kernel_size) ** 0.5)
 
     def post_synthesis(self, wav):
@@ -119,6 +117,20 @@ class TorchSTFTFB(STFTFB):
             center=self.center,
         )
         return wav_out
+
+
+@script_if_tracing
+def _restore_freqs_an(spec, n_filters: int):
+    spec[..., 0, :] *= 2 ** 0.5
+    spec[..., n_filters // 2, :] *= 2 ** 0.5
+    return spec
+
+
+@script_if_tracing
+def _restore_freqs_syn(spec, n_filters: int):
+    spec[..., 0, :] /= 2 ** 0.5
+    spec[..., n_filters // 2, :] /= 2 ** 0.5
+    return spec
 
 
 @script_if_tracing
