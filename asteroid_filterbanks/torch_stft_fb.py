@@ -135,7 +135,7 @@ def ola_with_wdiv(wav, window, kernel_size: int, stride: int, center: bool = Tru
 
     start = kernel_size // 2 if center else 0
     wav = wav[..., start:]
-    wsq_ola = wsq_ola[..., start:]
+    wsq_ola = wsq_ola[..., start:].expand_as(wav)
 
     min_mask = wsq_ola.abs() < 1e-11
     if min_mask.any() and not torch.jit.is_scripting():
