@@ -37,10 +37,10 @@ class STFTFB(Filterbank):
             ws = window.size
             if not (ws == kernel_size):
                 raise AssertionError(
-                    "Expected window of size {}."
-                    "Received window of size {} instead."
-                    "".format(kernel_size, ws)
+                    f"Expected window of size {kernel_size}. Received {ws} instead."
                 )
+            if isinstance(window, torch.Tensor):
+                window = window.data.numpy()
             self.window = window
         # Create and normalize DFT filters (can be overcomplete)
         filters = np.fft.fft(np.eye(n_filters))
@@ -58,7 +58,7 @@ class STFTFB(Filterbank):
         filters[n_filters // 2, :] /= np.sqrt(2)
         filters = torch.from_numpy(filters * self.window).unsqueeze(1).float()
         self.register_buffer("_filters", filters)
-        self.register_buffer("torch_window", torch.from_numpy(self.window))
+        self.register_buffer("torch_window", torch.from_numpy(self.window).float())
 
     def filters(self):
         return self._filters
