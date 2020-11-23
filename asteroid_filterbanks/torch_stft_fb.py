@@ -138,7 +138,7 @@ def ola_with_wdiv(wav, window, kernel_size: int, stride: int, center: bool = Tru
     wsq_ola = wsq_ola[..., start:]
 
     min_mask = wsq_ola.abs() < 1e-11
-    if min_mask.any():
+    if min_mask.any() and not torch.jit.is_scripting():
         # Warning instead of error. Might be trimmed afterward.
         warnings.warn(
             f"Minimum NOLA should be above 1e-11, Found {wsq_ola.abs().min()}. "
@@ -158,6 +158,11 @@ def square_ola(window: torch.Tensor, kernel_size: int, stride: int, n_frame: int
 
 @script_if_tracing
 def pad_all_shapes(x: torch.Tensor, pad_shape: List[int], mode: str = "reflect") -> torch.Tensor:
-    if x.ndim < 3:
+    if x.ndim == 1:
         return F.pad(x[None, None], pad=pad_shape, mode=mode).squeeze(0).squeeze(0)
+    if x.ndim == 2:
+        return F.pad(x[None], pad=pad_shape, mode=mode).squeeze(0)
+    if x.ndim == 3:
+        return F.pad(x, pad=pad_shape, mode=mode)
+    pad_shape = [pad_shape[0]] + [0 for _ in range(x.ndim - 1)]
     return F.pad(x, pad=pad_shape, mode=mode)
