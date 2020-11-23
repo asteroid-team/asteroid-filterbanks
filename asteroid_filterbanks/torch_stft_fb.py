@@ -14,6 +14,7 @@ class TorchSTFTFB(STFTFB):
     Args:
         *args: Passed to `STFTFB`.
         center (bool): Whether to center the each frame. (pad left and right).
+        pad_mode (str): How to pad if `center` is True. Only used for the STFT.
         normalize: Unsupported yet.
         **kwargs: Passed to `STFTFB`.
 
@@ -21,9 +22,10 @@ class TorchSTFTFB(STFTFB):
     more detail.
     """
 
-    def __init__(self, *args, center=True, normalize=False, **kwargs):
+    def __init__(self, *args, center=True, pad_mode="reflect", normalize=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.center = center
+        self.pad_mode = pad_mode
         if normalize:
             raise NotImplementedError
         self.normalize = normalize
@@ -33,7 +35,7 @@ class TorchSTFTFB(STFTFB):
         if not self.center:
             return wav
         pad_shape = [self.kernel_size // 2, self.kernel_size // 2]
-        wav = pad_all_shapes(wav, pad_shape=pad_shape, mode="reflect")
+        wav = pad_all_shapes(wav, pad_shape=pad_shape, mode=self.pad_mode)
         return wav
 
     def post_analysis(self, spec):
@@ -84,7 +86,8 @@ def ola_with_wdiv(wav, window, kernel_size: int, stride: int, center: bool = Tru
         # Warning instead of error. Might be trimmed afterward.
         warnings.warn(
             f"Minimum NOLA should be above 1e-11, Found {wsq_ola.abs().min()}. "
-            f"Dividind only where possible."
+            f"Dividind only where possible.",
+            RuntimeWarning,
         )
     wav[~min_mask] = wav[~min_mask] / wsq_ola[~min_mask]
     return wav
