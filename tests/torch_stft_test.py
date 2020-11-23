@@ -18,22 +18,7 @@ def to_asteroid(x):
 @pytest.mark.parametrize("hop_ratio", [1, 2, 4])
 @pytest.mark.parametrize(
     "win_length",
-    [
-        16,
-        32,
-        64,
-        128,
-        256,
-        512,
-        1024,
-        12,
-        30,
-        58,
-        122,
-        238,
-        498,
-        1018,
-    ],
+    [16, 32, 64, 128, 256, 512, 1024, 12, 30, 58, 122, 238, 498, 1018],
 )
 @pytest.mark.parametrize("window", [None, "boxcar", "hann", "blackman", "hamming"])
 @pytest.mark.parametrize("center", [True, False])
