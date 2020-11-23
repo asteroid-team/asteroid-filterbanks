@@ -78,7 +78,7 @@ class TorchSTFT(STFTFB):
 
         n_frame = 1 + (wav.shape[-1] - self.kernel_size) // self.stride
         wsq_ola = square_ola(
-            torch.from_numpy(self.torch_window),
+            self.torch_window,
             kernel_size=self.kernel_size,
             stride=self.stride,
             n_frame=n_frame,
