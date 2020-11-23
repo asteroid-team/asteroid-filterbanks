@@ -20,6 +20,21 @@ class TorchSTFTFB(STFTFB):
 
     See :class:`STFTFB`, :function:`torch.stft` and :function:`torch.istft` for
     more detail.
+
+    .. warning::
+        In order to obtain perfect reconstruction, `torch.istft` divides the wav
+        output by the overlap-added square window (WSOLA) (assumed the same for
+         analysis and synthesis). This might cause problems for windows containing
+         zeros (and several common windows do). When using `center=True`, the leading
+        and trailing zeros of the WSOLA will be discarded, virtually solving this
+        problem.
+
+        We intentionally match this behavior, to provide code that behaves exactly
+        like `torch.istft`. But whereas `torch.istft` raises an error when the
+        WSOLA contains zeros, we only raise a warning.
+
+        As the code is rigorously tested, if your code worked before with
+        `torch.istft`, it won't break with TorchSTFTFB.
     """
 
     def __init__(self, *args, center=True, pad_mode="reflect", normalize=False, **kwargs):
@@ -105,61 +120,3 @@ def pad_all_shapes(x: torch.Tensor, pad_shape: List[int], mode: str = "reflect")
     if x.ndim < 3:
         return F.pad(x[None, None], pad=pad_shape, mode=mode).squeeze(0).squeeze(0)
     return F.pad(x, pad=pad_shape, mode=mode)
-
-
-#
-# if __name__ == "__main__":
-#     def to_asteroid(x):
-#         return torch.cat([x[..., 0], x[..., 1]], dim=-2)
-#
-
-#     from torch.testing import assert_allclose
-#
-#     wav = torch.randn(16000)
-#     center = True
-#     for kernel_size in [16, 32, 64, 128, 256, 512]:
-#         print(kernel_size)
-#         stride = kernel_size // 2
-#
-#         # window = torch.ones(kernel_size) / 2 ** 0.5
-#         window = 0.001 * torch.hann_window(kernel_size) ** 0.85
-#
-#         fb = TorchSTFT(
-#             n_filters=kernel_size,
-#             kernel_size=kernel_size,
-#             stride=stride,
-#             window=window.data.numpy(),
-#             center=center,
-#         )
-#         # window = torch.from_numpy(fb.window)
-#         enc = Encoder(fb)
-#         dec = Decoder(fb)
-#
-#         spec = torch.stft(
-#             wav.squeeze(),
-#             n_fft=kernel_size,
-#             hop_length=stride,
-#             win_length=kernel_size,
-#             center=center,
-#             window=window,
-#         )
-#         wav_back = torch.istft(
-#             spec,
-#             n_fft=kernel_size,
-#             hop_length=stride,
-#             win_length=kernel_size,
-#             window=window,
-#             center=center,
-#             length=wav.shape[0],
-#         )
-#         spec = to_asteroid(spec.float())
-#         asteroid_spec = enc(wav)
-#         asteroid_wavback = dec(asteroid_spec, length=wav.shape[0])
-#         #
-#         assert_allclose(spec, asteroid_spec)
-#         assert_allclose(wav_back, asteroid_wavback)
-#
-#     # plt.plot(wav.numpy(), "r")
-#     # plt.plot(asteroid_wavback.numpy(), "b+")
-#     # plt.plot(wav_back.numpy(), "k+")
-#     # plt.show()
