@@ -14,18 +14,18 @@ def to_asteroid(x):
     return torch.cat([x[..., 0], x[..., 1]], dim=-2)
 
 
-@pytest.mark.parametrize("n_fft_next_pow", [True, False])
+@pytest.mark.parametrize("n_fft_next_pow", [False])
 @pytest.mark.parametrize("hop_ratio", [1, 2, 4])
 @pytest.mark.parametrize(
     "win_length",
     [16, 32, 64, 128, 256, 512, 1024, 12, 30, 58, 122, 238, 498, 1018],
 )
-@pytest.mark.parametrize("window", [None, "boxcar", "hann", "blackman", "hamming"])
+@pytest.mark.parametrize("window", [None, "hann", "blackman", "hamming"])
 @pytest.mark.parametrize("center", [True, False])
 @pytest.mark.parametrize("pad_mode", ["reflect", "constant"])
 @pytest.mark.parametrize("normalized", [False])  # True unsupported
 @pytest.mark.parametrize("sample_rate", [8000.0])  # No impact
-@pytest.mark.parametrize("pass_length", [True, False])
+@pytest.mark.parametrize("pass_length", [True])
 @pytest.mark.parametrize("wav_shape", [(8000,)])
 def test_torch_stft(
     n_fft_next_pow,
@@ -40,8 +40,8 @@ def test_torch_stft(
     wav_shape,
 ):
     # Accept 0.1 less tolerance for larger windows.
-    RTOL = 1e-3 if win_length > 512 else 1e-4
-    ATOL = 1e-4 if win_length > 512 else 1e-5
+    RTOL = 1e-3 if win_length > 256 else 1e-4
+    ATOL = 1e-4 if win_length > 256 else 1e-5
     wav = torch.randn(wav_shape, dtype=torch.float32)
     output_len = wav.shape[-1] if pass_length else None
     n_fft = win_length if not n_fft_next_pow else next_power_of_2(win_length)
@@ -120,3 +120,10 @@ def test_raises_if_onesided_is_false():
 def test_raises_if_normalized_is_true():
     with pytest.raises(NotImplementedError):
         TorchSTFTFB.from_torch_args(512, hop_length=256, win_length=256, normalized=True)
+
+
+def test_raises_filt_kern_diff():
+    with pytest.raises(NotImplementedError):
+        TorchSTFTFB.from_torch_args(512, win_length=500)
+    with pytest.raises(NotImplementedError):
+        TorchSTFTFB(n_filters=512, kernel_size=500)

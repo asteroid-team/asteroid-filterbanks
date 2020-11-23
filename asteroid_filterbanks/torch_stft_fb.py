@@ -42,7 +42,10 @@ class TorchSTFTFB(STFTFB):
 
     def __init__(
         self,
-        *args,
+        n_filters,
+        kernel_size,
+        stride=None,
+        window=None,
         center=True,
         pad_mode="reflect",
         normalized=False,
@@ -50,7 +53,13 @@ class TorchSTFTFB(STFTFB):
         sample_rate=8000.0,
         **kwargs,
     ):
-        super().__init__(*args, sample_rate=sample_rate, **kwargs)
+        if n_filters != kernel_size:
+            raise NotImplementedError(
+                "Cannot set `n_filters!=kernel_size` in TorchSTFTFB, untested."
+            )
+        super().__init__(
+            n_filters, kernel_size, stride=stride, window=window, sample_rate=sample_rate, **kwargs
+        )
         self.center = center
         self.pad_mode = pad_mode
         if normalized:
