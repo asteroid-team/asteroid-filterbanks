@@ -95,14 +95,14 @@ class TorchSTFTFB(STFTFB):
         """Correct the scale to match torch.stft."""
         spec[..., 0, :] *= np.sqrt(2)
         spec[..., self.n_filters // 2, :] *= np.sqrt(2)
-        return spec * (self.kernel_size // 2) ** 0.5
+        return spec * 0.5 * (self.kernel_size * self.n_filters / self.stride) ** 0.5
 
     def pre_synthesis(self, spec):
         """Correct the scale to match what's expected by torch.istft."""
         spec = spec.clone()
         spec[..., 0, :] /= np.sqrt(2)
         spec[..., self.n_filters // 2, :] /= np.sqrt(2)
-        return spec / (self.kernel_size // 2) ** 0.5
+        return spec / ((self.stride * self.n_filters / self.kernel_size) ** 0.5)
 
     def post_synthesis(self, wav):
         """Perform OLA on the waveforms and divide by the squared window OLA.

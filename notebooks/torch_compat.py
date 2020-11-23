@@ -43,7 +43,7 @@ if __name__ == "__main__":
         # window = torch.ones(kernel_size) / 2 ** 0.5
         window = 0.001 * torch.hann_window(kernel_size) ** 0.85
 
-        fb = TorchSTFT(
+        fb = TorchSTFTFB(
             n_filters=kernel_size,
             kernel_size=kernel_size,
             stride=stride,
