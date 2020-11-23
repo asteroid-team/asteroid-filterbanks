@@ -28,13 +28,16 @@ class TorchSTFTFB(STFTFB):
          zeros (and several common windows do). When using `center=True`, the leading
         and trailing zeros of the WSOLA will be discarded, virtually solving this
         problem.
-
         We intentionally match this behavior, to provide code that behaves exactly
         like `torch.istft`. But whereas `torch.istft` raises an error when the
         WSOLA contains zeros, we only raise a warning.
-
         As the code is rigorously tested, if your code worked before with
         `torch.istft`, it won't break with TorchSTFTFB.
+
+    .. note::
+        When no `length` argument is given to `torch.istft`, the padding is
+        aggressively removed. In this implementation, the whole signal is passed
+        back to the user.
     """
 
     def __init__(
