@@ -37,6 +37,25 @@ class TorchSTFTFB(STFTFB):
         `torch.istft`, it won't break with TorchSTFTFB.
     """
 
+    def __init__(
+        self,
+        *args,
+        center=True,
+        pad_mode="reflect",
+        normalized=False,
+        onesided=True,
+        sample_rate=8000.0,
+        **kwargs,
+    ):
+        super().__init__(*args, sample_rate=sample_rate, **kwargs)
+        self.center = center
+        self.pad_mode = pad_mode
+        if normalized:
+            raise NotImplementedError
+        if not onesided:
+            raise NotImplementedError
+        self.normalize = normalized
+
     @classmethod
     def from_torch_args(
         cls,
@@ -63,25 +82,6 @@ class TorchSTFTFB(STFTFB):
             sample_rate=sample_rate,
             **kwargs,
         )
-
-    def __init__(
-        self,
-        *args,
-        center=True,
-        pad_mode="reflect",
-        normalized=False,
-        onesided=True,
-        sample_rate=8000.0,
-        **kwargs,
-    ):
-        super().__init__(*args, sample_rate=sample_rate, **kwargs)
-        self.center = center
-        self.pad_mode = pad_mode
-        if normalized:
-            raise NotImplementedError
-        if not onesided:
-            raise NotImplementedError
-        self.normalize = normalized
 
     def pre_analysis(self, wav):
         """Centers the frames if `center` is True."""
