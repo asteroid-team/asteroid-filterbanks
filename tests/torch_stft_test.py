@@ -26,8 +26,6 @@ def to_asteroid(x):
         256,
         512,
         1024,
-        2048,
-        4096,
         12,
         30,
         58,
@@ -35,8 +33,6 @@ def to_asteroid(x):
         238,
         498,
         1018,
-        1998,
-        4084,
     ],
 )
 @pytest.mark.parametrize("window", [None, "boxcar", "hann", "blackman", "hamming"])
@@ -45,7 +41,7 @@ def to_asteroid(x):
 @pytest.mark.parametrize("normalized", [False])  # True unsupported
 @pytest.mark.parametrize("sample_rate", [8000.0])  # No impact
 @pytest.mark.parametrize("pass_length", [True, False])
-@pytest.mark.parametrize("wav_shape", [(16000)])
+@pytest.mark.parametrize("wav_shape", [(8000,)])
 def test_torch_stft(
     n_fft_next_pow,
     hop_ratio,
