@@ -1,4 +1,5 @@
 import warnings
+from typing import Optional
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -36,6 +37,10 @@ class Filterbank(nn.Module):
         """ Abstract method for filters. """
         raise NotImplementedError
 
+    def pre_analysis(self, wav: torch.Tensor):
+        """Apply transform before encoder convolution."""
+        return wav
+
     def post_analysis(self, spec: torch.Tensor):
         """Apply transform to encoder convolution."""
         return spec
@@ -43,6 +48,10 @@ class Filterbank(nn.Module):
     def pre_synthesis(self, spec: torch.Tensor):
         """Apply transform before decoder transposed convolution."""
         return spec
+
+    def post_synthesis(self, wav: torch.Tensor):
+        """Apply transform after decoder transposed convolution."""
+        return wav
 
     def get_config(self):
         """ Returns dictionary of arguments to re-instantiate the class. """
@@ -160,6 +169,7 @@ class Encoder(_EncDec):
             >>> (batch, any, dim, time) --> (batch, any, dim, freq, conv_time)
         """
         filters = self.get_filters()
+        waveform = self.filterbank.pre_analysis(waveform)
         spec = multishape_conv1d(
             waveform,
             filters=filters,
@@ -252,7 +262,7 @@ class Decoder(_EncDec):
         elif isinstance(filterbank, Encoder):
             return cls(filterbank.filterbank, is_pinv=True)
 
-    def forward(self, spec) -> torch.Tensor:
+    def forward(self, spec, length: Optional[int] = None) -> torch.Tensor:
         """Applies transposed convolution to a TF representation.
 
         This is equivalent to overlap-add.
@@ -260,18 +270,24 @@ class Decoder(_EncDec):
         Args:
             spec (:class:`torch.Tensor`): 3D or 4D Tensor. The TF
                 representation. (Output of :func:`Encoder.forward`).
+            length: desired output length.
         Returns:
             :class:`torch.Tensor`: The corresponding time domain signal.
         """
         filters = self.get_filters()
         spec = self.filterbank.pre_synthesis(spec)
-        return multishape_conv_transpose1d(
+        wav = multishape_conv_transpose1d(
             spec,
             filters,
             stride=self.stride,
             padding=self.padding,
             output_padding=self.output_padding,
         )
+        wav = self.filterbank.post_synthesis(wav)
+        if length is not None:
+            length = min(length, wav.shape[-1])
+            return wav[:length]
+        return wav
 
 
 @script_if_tracing

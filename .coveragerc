@@ -1,5 +1,5 @@
 [report]
-fail_under=80
+fail_under=10
 # Regexes for lines to exclude from consideration
 exclude_lines =
   pragma: no cover
