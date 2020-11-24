@@ -26,7 +26,7 @@ def test_jit_filterbanks_enc(filter_bank_name, inference_data):
     if filter_bank_name == TorchSTFTFB:
         kernel_size = n_filters
     else:
-        kernel_size = 2 * n_filters
+        kernel_size = n_filters // 2
     enc, _ = make_enc_dec(filter_bank_name, n_filters=n_filters, kernel_size=kernel_size)
 
     inputs = ((torch.rand(1, 200) - 0.5) * 2,)
