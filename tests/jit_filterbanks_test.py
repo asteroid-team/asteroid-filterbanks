@@ -22,7 +22,12 @@ from asteroid_filterbanks.torch_stft_fb import TorchSTFTFB
     ),
 )
 def test_jit_filterbanks_enc(filter_bank_name, inference_data):
-    enc, _ = make_enc_dec(filter_bank_name, n_filters=32, kernel_size=16)
+    n_filters = 32
+    if filter_bank_name == TorchSTFTFB:
+        kernel_size = n_filters
+    else:
+        kernel_size = 2 * n_filters
+    enc, _ = make_enc_dec(filter_bank_name, n_filters=n_filters, kernel_size=kernel_size)
 
     inputs = ((torch.rand(1, 200) - 0.5) * 2,)
     traced = torch.jit.trace(enc, inputs)
@@ -74,6 +79,8 @@ class DummyModel(torch.nn.Module):
         **fb_kwargs,
     ):
         super().__init__()
+        if fb_name == TorchSTFTFB:
+            n_filters = kernel_size
         encoder, decoder = make_enc_dec(
             fb_name, kernel_size=kernel_size, n_filters=n_filters, stride=stride, **fb_kwargs
         )
