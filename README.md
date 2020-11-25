@@ -48,6 +48,6 @@ pip install -e .["all"]
 
 [comment]: <> (Badge)
 [codecov-badge]: https://codecov.io/gh/mpariente/asteroid-filterbanks/branch/master/graph/badge.svg
-[codecov]: https://codecov.io/gh/mpariente/asteroid-filterbanks
+[codecov]: https://codecov.io/gh/asteroid-team/asteroid-filterbanks
 [slack-badge]: https://img.shields.io/badge/slack-chat-green.svg?logo=slack
 [slack-invite]: https://join.slack.com/t/asteroid-dev/shared_invite/zt-cn9y85t3-QNHXKD1Et7qoyzu1Ji5bcA
