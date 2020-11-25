@@ -190,16 +190,6 @@ def test_torchaudio_format(dim, max_tested_ndim):
     assert ta_tensor.shape[-1] == 2
 
 
-def test_ebased_vad():
-    mag_spec = torch.abs(torch.randn(10, 2, 65, 16))  # Need positive inputs
-    batch_src_mask = transforms.ebased_vad(mag_spec)
-
-    assert isinstance(batch_src_mask, torch.BoolTensor)
-    batch_1_mask = transforms.ebased_vad(mag_spec[:, 0])
-    # Assert independence of VAD output
-    assert (batch_src_mask[:, 0] == batch_1_mask).all()
-
-
 def test_magphase():
     spec_shape = [2, 514, 100]
     spec = torch.randn(*spec_shape)
@@ -209,24 +199,6 @@ def test_magphase():
     out_shape[-2] //= 2
     assert out_shape == list(mag.shape)
     assert out_shape == list(phase.shape)
-
-
-@pytest.mark.parametrize("dim", [1, 2, -1, -2])
-def test_delta(dim):
-    phase = torch.randn(2, 257, 100)
-    delta_phase = transforms.compute_delta(phase, dim=dim)
-    assert phase.shape == delta_phase.shape
-
-
-@pytest.mark.parametrize("dim", [1, 2, -1, -2])
-@pytest.mark.parametrize("order", [1, 2])
-def test_concat_deltas(dim, order):
-    phase_shape = [2, 257, 100]
-    phase = torch.randn(*phase_shape)
-    cat_deltas = transforms.concat_deltas(phase, order=order, dim=dim)
-    out_shape = list(phase_shape)
-    out_shape[dim] = phase_shape[dim] * (1 + order)
-    assert out_shape == list(cat_deltas.shape)
 
 
 @pytest.mark.parametrize("kernel_size", [40, 64])
