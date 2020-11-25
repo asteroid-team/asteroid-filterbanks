@@ -190,6 +190,19 @@ def test_torchaudio_format(dim, max_tested_ndim):
     assert ta_tensor.shape[-1] == 2
 
 
+@pytest.mark.parametrize("dim", [0, 1, 2, 3, -1, -2, -3])
+@pytest.mark.parametrize("max_tested_ndim", [4, 5])
+def test_torch_complex_format(dim, max_tested_ndim):
+    # Random tensor shape
+    tensor_shape = [random.randint(1, 10) for _ in range(max_tested_ndim)]
+    # Make sure complex dimension has even shape
+    tensor_shape[dim] = 2 * tensor_shape[dim]
+    complex_tensor = torch.randn(tensor_shape)
+    ta_tensor = transforms.to_torch_complex(complex_tensor, dim=dim)
+    tensor_back = transforms.from_torch_complex(ta_tensor, dim=dim)
+    assert_allclose(complex_tensor, tensor_back)
+
+
 def test_magphase():
     spec_shape = [2, 514, 100]
     spec = torch.randn(*spec_shape)

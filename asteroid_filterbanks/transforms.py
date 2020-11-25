@@ -324,6 +324,36 @@ def from_torchaudio(tensor, dim: int = -2):
     return torch.cat(torch.chunk(tensor, 2, dim=-1), dim=dim).squeeze(-1)
 
 
+def to_torch_complex(tensor, dim: int = -2):
+    """Converts complex-like torch tensor to native PyTorch complex tensor.
+
+    Args:
+        tensor (torch.tensor): asteroid-style complex-like torch tensor.
+        dim(int, optional): the frequency (or equivalent) dimension along which
+            real and imaginary values are concatenated.
+
+    Returns:
+        :class:`torch.Tensor`:
+            Pytorch native complex-like torch tensor.
+    """
+    return torch.view_as_complex(to_torchaudio(tensor, dim=dim))
+
+
+def from_torch_complex(tensor, dim: int = -2):
+    """Converts Pytorch native complex tensor to complex-like torch tensor.
+
+    Args:
+        tensor (torch.tensor): PyTorch native complex-like torch tensor.
+        dim(int, optional): the frequency (or equivalent) dimension along which
+            real and imaginary values are concatenated.
+
+    Returns:
+        :class:`torch.Tensor`:
+            asteroid-style complex-like torch tensor.
+    """
+    return torch.cat([tensor.real, tensor.imag], dim=dim)
+
+
 def angle(tensor, dim: int = -2):
     """Return the angle of the complex-like torch tensor.
 
