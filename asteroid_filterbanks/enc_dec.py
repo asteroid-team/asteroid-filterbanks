@@ -9,7 +9,7 @@ from .scripting import script_if_tracing
 
 class Filterbank(nn.Module):
     """Base Filterbank class.
-    Each subclass has to implement a `filters` property.
+    Each subclass has to implement a ``filters`` method.
 
     Args:
         n_filters (int): Number of filters.
@@ -54,7 +54,10 @@ class Filterbank(nn.Module):
         return wav
 
     def get_config(self):
-        """ Returns dictionary of arguments to re-instantiate the class. """
+        """Returns dictionary of arguments to re-instantiate the class.
+        Needs to be subclassed if the filterbanks takes additional arguments
+        than ``n_filters`` ``kernel_size`` ``stride`` and ``sample_rate``.
+        """
         config = {
             "fb_name": self.__class__.__name__,
             "n_filters": self.n_filters,
@@ -70,7 +73,6 @@ class Filterbank(nn.Module):
 
 class _EncDec(nn.Module):
     """Base private class for Encoder and Decoder.
-
     Common parameters and methods.
 
     Args:
@@ -117,7 +119,7 @@ class _EncDec(nn.Module):
 
 
 class Encoder(_EncDec):
-    """Encoder class.
+    r"""Encoder class.
 
     Add encoding methods to Filterbank classes.
     Not intended to be subclassed.
@@ -127,9 +129,9 @@ class Encoder(_EncDec):
             as an encoder.
         is_pinv (bool): Whether to be the pseudo inverse of filterbank.
         as_conv1d (bool): Whether to behave like nn.Conv1d.
-            If True (default), forwarding input with shape (batch, 1, time)
-            will output a tensor of shape (batch, freq, conv_time).
-            If False, will output a tensor of shape (batch, 1, freq, conv_time).
+            If True (default), forwarding input with shape :math:`(batch, 1, time)`
+            will output a tensor of shape :math:`(batch, freq, conv\_time)`.
+            If False, will output a tensor of shape :math:`(batch, 1, freq, conv\_time)`.
         padding (int): Zero-padding added to both sides of the input.
 
     """
@@ -151,22 +153,24 @@ class Encoder(_EncDec):
 
     def forward(self, waveform):
         """Convolve input waveform with the filters from a filterbank.
+
         Args:
             waveform (:class:`torch.Tensor`): any tensor with samples along the
                 last dimension. The waveform representation with and
                 batch/channel etc.. dimension.
+
         Returns:
             :class:`torch.Tensor`: The corresponding TF domain signal.
 
-        Shapes:
-            >>> (time, ) --> (freq, conv_time)
-            >>> (batch, time) --> (batch, freq, conv_time)  # Avoid
+        Shapes
+            >>> (time, ) -> (freq, conv_time)
+            >>> (batch, time) -> (batch, freq, conv_time)  # Avoid
             >>> if as_conv1d:
-            >>>     (batch, 1, time) --> (batch, freq, conv_time)
-            >>>     (batch, chan, time) --> (batch, chan, freq, conv_time)
+            >>>     (batch, 1, time) -> (batch, freq, conv_time)
+            >>>     (batch, chan, time) -> (batch, chan, freq, conv_time)
             >>> else:
-            >>>     (batch, chan, time) --> (batch, chan, freq, conv_time)
-            >>> (batch, any, dim, time) --> (batch, any, dim, freq, conv_time)
+            >>>     (batch, chan, time) -> (batch, chan, freq, conv_time)
+            >>> (batch, any, dim, time) -> (batch, any, dim, freq, conv_time)
         """
         filters = self.get_filters()
         waveform = self.filterbank.pre_analysis(waveform)
@@ -245,8 +249,9 @@ class Decoder(_EncDec):
         output_padding (int): Additional size added to one side of the
             output shape.
 
-    ..note:: `padding` and `output_padding` arguments are directly passed to
-        F.conv_transpose1d.
+    .. note::
+        ``padding`` and ``output_padding`` arguments are directly passed to
+        ``F.conv_transpose1d``.
     """
 
     def __init__(self, filterbank, is_pinv=False, padding=0, output_padding=0):
@@ -271,6 +276,7 @@ class Decoder(_EncDec):
             spec (:class:`torch.Tensor`): 3D or 4D Tensor. The TF
                 representation. (Output of :func:`Encoder.forward`).
             length: desired output length.
+
         Returns:
             :class:`torch.Tensor`: The corresponding time domain signal.
         """

@@ -38,8 +38,9 @@ def griffin_lim(mag_specgram, stft_enc, angles=None, istft_dec=None, n_iter=6, m
         >>> est_wav = griffin_lim(mag, stft, n_iter=32)
 
     References
-        - [1] Perraudin et al. "A fast Griffin-Lim algorithm," WASPAA 2013.
-        - [2] D. W. Griffin and J. S. Lim:  "Signal estimation from modified
+        [1] Perraudin et al. "A fast Griffin-Lim algorithm," WASPAA 2013.
+
+        [2] D. W. Griffin and J. S. Lim:  "Signal estimation from modified
         short-time Fourier transform," ASSP 1984.
 
     """
@@ -123,6 +124,7 @@ def misi(
         [1] Gunawan and Sen, "Iterative Phase Estimation for the Synthesis of
         Separated Sources From Single-Channel Mixtures," in IEEE Signal
         Processing Letters, 2010.
+
         [2] Wang, LeRoux et al. “End-to-End Speech Separation with Unfolded
         Iterative Phase Reconstruction.” Interspeech 2018 (2018)
     """
@@ -152,7 +154,7 @@ def misi(
         complex_specgram = transforms.from_magphase(mag_specgrams, angles)
         wavs = istft_dec(complex_specgram)
         # Make wavs sum up to the mixture
-        consistent_wavs = mixture_consistency(
+        consistent_wavs = _mixture_consistency(
             mixture_wav, wavs, src_weights=src_weights, dim=wav_dim
         )
         # Back to TF domain
@@ -166,7 +168,7 @@ def misi(
     return istft_dec(final_complex_spec)
 
 
-def mixture_consistency(
+def _mixture_consistency(
     mixture: torch.Tensor,
     est_sources: torch.Tensor,
     src_weights: Optional[torch.Tensor] = None,
@@ -174,7 +176,7 @@ def mixture_consistency(
 ) -> torch.Tensor:
     """Applies mixture consistency to a tensor of estimated sources.
 
-    Args
+    Args:
         mixture (torch.Tensor): Mixture waveform or TF representation.
         est_sources (torch.Tensor): Estimated sources waveforms or TF
             representations.
@@ -184,11 +186,11 @@ def mixture_consistency(
             If `src_weights` is None, compute them based on relative power.
         dim (int): Axis which contains the sources in `est_sources`.
 
-    Returns
+    Returns:
         torch.Tensor with same shape as `est_sources`, after applying mixture
         consistency.
 
-    Notes
+    .. note::
         This method can be used only in 'complete' separation tasks, otherwise
         the residual error will contain unwanted sources. For example, this
         won't work with the task `sep_noisy` from WHAM.
@@ -204,7 +206,7 @@ def mixture_consistency(
         >>> new_est_sources = mixture_consistency(mix, est_sources, dim=1)
 
     References
-        - Scott Wisdom, John R Hershey, Kevin Wilson, Jeremy Thorpe, Michael
+        Scott Wisdom, John R Hershey, Kevin Wilson, Jeremy Thorpe, Michael
         Chinen, Brian Patton, and Rif A Saurous. "Differentiable consistency
         constraints for improved deep speech enhancement", ICASSP 2019.
     """
