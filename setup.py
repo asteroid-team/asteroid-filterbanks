@@ -10,7 +10,7 @@ setup(
     version=asteroid_version,
     author="Manuel Pariente",
     author_email="manuel.pariente@loria.fr",
-    url="https://github.com/mpariente/asteroid-filterbanks",
+    url="https://github.com/asteroid-team/asteroid-filterbanks",
     description="Asteroid's filterbanks",
     long_description=long_description,
     long_description_content_type="text/markdown",
