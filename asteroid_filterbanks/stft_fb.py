@@ -63,6 +63,18 @@ class STFTFB(Filterbank):
     def filters(self):
         return self._filters
 
+    def _load_from_state_dict(
+        self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
+    ):
+        """Compat loader to avoid breaking when torch_window is missing."""
+        super()._load_from_state_dict(
+            state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
+        )
+        # Torch window won't change, it's just a convenience.
+        to_remove = [key for key in missing_keys if key.endswith("torch_window")]
+        for key in to_remove:
+            missing_keys.remove(key)
+
 
 def perfect_synthesis_window(analysis_window, hop_size):
     """Computes a window for perfect synthesis given an analysis window and
