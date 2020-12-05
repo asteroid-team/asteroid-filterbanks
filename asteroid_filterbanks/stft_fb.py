@@ -34,13 +34,13 @@ class STFTFB(Filterbank):
         if window is None:
             self.window = np.hanning(kernel_size + 1)[:-1] ** 0.5
         else:
+            if isinstance(window, torch.Tensor):
+                window = window.data.numpy()
             ws = window.size
             if not (ws == kernel_size):
                 raise AssertionError(
                     f"Expected window of size {kernel_size}. Received {ws} instead."
                 )
-            if isinstance(window, torch.Tensor):
-                window = window.data.numpy()
             self.window = window
         # Create and normalize DFT filters (can be overcomplete)
         filters = np.fft.fft(np.eye(n_filters))
