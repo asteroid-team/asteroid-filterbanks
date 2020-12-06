@@ -73,10 +73,13 @@ def test_perfect_istft_default_parameters(fb_config):
 @pytest.mark.parametrize(
     "analysis_window_name", ["blackman", "hamming", "hann", "bartlett", "boxcar"]
 )
-def test_perfect_resyn_window(fb_config, analysis_window_name):
+@pytest.mark.parametrize("use_torch_window", [True, False])
+def test_perfect_resyn_window(fb_config, analysis_window_name, use_torch_window):
     """ Unit test perfect reconstruction """
     kernel_size = fb_config["kernel_size"]
     window = get_window(analysis_window_name, kernel_size)
+    if use_torch_window:
+        window = torch.Tensor(window)
 
     enc = Encoder(STFTFB(**fb_config, window=window))
     # Compute window for perfect resynthesis
