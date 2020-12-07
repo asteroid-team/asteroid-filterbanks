@@ -1,6 +1,12 @@
 import torch
 import torch.nn as nn
 import numpy as np
+
+try:
+    from torch import rfft, irfft
+except ImportError:
+    from torch.fft import rfft, irfft
+
 from .enc_dec import Filterbank
 
 
