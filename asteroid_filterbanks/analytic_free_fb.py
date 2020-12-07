@@ -47,7 +47,7 @@ class AnalyticFreeFB(Filterbank):
             nn.init.xavier_normal_(p, gain=1.0 / np.sqrt(2.0))
 
     def filters(self):
-        ft_f = torch.rfft(self._filters, 1, normalized=True)
+        ft_f = rfft(self._filters, 1, normalized=True)
         hft_f = torch.stack([ft_f[:, :, :, 1], -ft_f[:, :, :, 0]], dim=-1)
-        hft_f = torch.irfft(hft_f, 1, normalized=True, signal_sizes=(self.kernel_size,))
+        hft_f = irfft(hft_f, 1, normalized=True, signal_sizes=(self.kernel_size,))
         return torch.cat([self._filters, hft_f], dim=0)
