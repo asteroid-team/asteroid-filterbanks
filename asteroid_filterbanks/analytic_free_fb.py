@@ -1,13 +1,33 @@
 import torch
 import torch.nn as nn
 import numpy as np
+from .enc_dec import Filterbank
 
 try:
     from torch import rfft, irfft
-except ImportError:
-    from torch.fft import rfft, irfft
 
-from .enc_dec import Filterbank
+    def conj(filt):
+        return torch.stack([filt[:, :, :, 1], -filt[:, :, :, 0]], dim=-1)
+
+
+except ImportError:
+    from torch import fft
+
+    # Very bad "wrapper" of torch1.7 fft module to match torch.rfft and irfft
+    # just for the analytic filterbanks. Signal_dim is ignore and signal_sizes
+    # is assumed to be of length 1 if provided. Don't use this anywhere, this is
+    # just a quick fix.
+    def rfft(input, signal_ndim, normalized=False):
+        norm = "ortho" if normalized else "backward"
+        return fft.fft(input, dim=-1, norm=norm)
+
+    def irfft(input, signal_ndim, normalized=False, signal_sizes=None):
+        norm = "ortho" if normalized else "backward"
+        n = None if signal_sizes is None else signal_sizes[0]
+        return fft.irfft(input, n=n, dim=-1, norm=norm)
+
+    def conj(filt):
+        return filt.conj()
 
 
 class AnalyticFreeFB(Filterbank):
@@ -48,6 +68,6 @@ class AnalyticFreeFB(Filterbank):
 
     def filters(self):
         ft_f = rfft(self._filters, 1, normalized=True)
-        hft_f = torch.stack([ft_f[:, :, :, 1], -ft_f[:, :, :, 0]], dim=-1)
+        hft_f = conj(ft_f)
         hft_f = irfft(hft_f, 1, normalized=True, signal_sizes=(self.kernel_size,))
         return torch.cat([self._filters, hft_f], dim=0)
