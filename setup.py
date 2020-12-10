@@ -1,13 +1,31 @@
-from setuptools import setup, find_packages
+import codecs
+import os
+import re
 
-asteroid_version = "0.3.1"
+from setuptools import setup, find_packages
 
 with open("README.md", encoding="utf-8") as fh:
     long_description = fh.read()
 
+here = os.path.abspath(os.path.dirname(__file__))
+
+
+def read(*parts):
+    with codecs.open(os.path.join(here, *parts), "r") as fp:
+        return fp.read()
+
+
+def find_version(*file_paths):
+    version_file = read(*file_paths)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
+
+
 setup(
     name="asteroid-filterbanks",
-    version=asteroid_version,
+    version=find_version("asteroid_filterbanks", "__init__.py"),
     author="Manuel Pariente",
     author_email="manuel.pariente@loria.fr",
     url="https://github.com/asteroid-team/asteroid-filterbanks",
