@@ -1,8 +1,9 @@
+from .enc_dec import Filterbank, Encoder, Decoder
 from .analytic_free_fb import AnalyticFreeFB
 from .free_fb import FreeFB
 from .param_sinc_fb import ParamSincFB
 from .stft_fb import STFTFB
-from .enc_dec import Filterbank, Encoder, Decoder
+from .torch_stft_fb import TorchSTFTFB
 from .griffin_lim import griffin_lim, misi
 from .multiphase_gammatone_fb import MultiphaseGammatoneFB
 from .melgram_fb import MelGramFB
@@ -110,6 +111,7 @@ free = FreeFB
 analytic_free = AnalyticFreeFB
 param_sinc = ParamSincFB
 stft = STFTFB
+torch_stft = TorchSTFTFB
 multiphase_gammatone = mpgtf = MultiphaseGammatoneFB
 
 # For the docs
@@ -119,6 +121,7 @@ __all__ = [
     "Decoder",
     "FreeFB",
     "STFTFB",
+    "TorchSTFTFB",
     "AnalyticFreeFB",
     "ParamSincFB",
     "MultiphaseGammatoneFB",
