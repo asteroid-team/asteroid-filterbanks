@@ -2,12 +2,11 @@ import torch
 import pytest
 from torch.testing import assert_allclose
 from asteroid_filterbanks import make_enc_dec
-from asteroid_filterbanks.torch_stft_fb import TorchSTFTFB
 
 
 @pytest.mark.parametrize(
     "filter_bank_name",
-    ("free", "stft", "analytic_free", "param_sinc", TorchSTFTFB),
+    ("free", "stft", "torch_stft", "analytic_free", "param_sinc"),
 )
 @pytest.mark.parametrize(
     "inference_data",
@@ -23,7 +22,7 @@ from asteroid_filterbanks.torch_stft_fb import TorchSTFTFB
 )
 def test_jit_filterbanks_enc(filter_bank_name, inference_data):
     n_filters = 32
-    if filter_bank_name == TorchSTFTFB:
+    if filter_bank_name == "torch_stft":
         kernel_size = n_filters
     else:
         kernel_size = n_filters // 2
@@ -41,7 +40,7 @@ def test_jit_filterbanks_enc(filter_bank_name, inference_data):
 
 @pytest.mark.parametrize(
     "filter_bank_name",
-    ("free", "stft", "analytic_free", "param_sinc", TorchSTFTFB),
+    ("free", "stft", "torch_stft", "analytic_free", "param_sinc"),
 )
 @pytest.mark.parametrize(
     "inference_data",
@@ -79,7 +78,7 @@ class DummyModel(torch.nn.Module):
         **fb_kwargs,
     ):
         super().__init__()
-        if fb_name == TorchSTFTFB:
+        if fb_name == "torch_stft":
             n_filters = kernel_size
         encoder, decoder = make_enc_dec(
             fb_name, kernel_size=kernel_size, n_filters=n_filters, stride=stride, **fb_kwargs
