@@ -292,7 +292,7 @@ class Decoder(_EncDec):
         wav = self.filterbank.post_synthesis(wav)
         if length is not None:
             length = min(length, wav.shape[-1])
-            return wav[:length]
+            return wav[..., :length]
         return wav
 
 
