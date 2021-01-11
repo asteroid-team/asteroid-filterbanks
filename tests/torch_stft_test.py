@@ -30,6 +30,32 @@ def stft3d(x: torch.Tensor, *args, **kwargs):
     return stft_f
 
 
+def istft3d(
+    X: torch.Tensor,
+    *args,
+    **kwargs,
+):
+    """Multichannel functional wrapper for torch.istft
+
+    Args:
+        STFT (Tensor): complex stft of
+            shape (nb_samples, nb_channels, nb_bins, nb_frames, complex=2)
+            last axis is stacked real and imaginary
+
+    Returns:
+        x (Tensor): audio waveform of
+            shape (nb_samples, nb_channels, nb_timesteps)
+
+    """
+
+    shape = X.size()
+    X = X.reshape(-1, shape[-3], shape[-2], shape[-1])
+    y = torch.istft(X, *args, **kwargs)
+    y = y.reshape(shape[:-3] + y.shape[-1:])
+
+    return y
+
+
 def next_power_of_2(x):
     return 1 if x == 0 else 2 ** (x - 1).bit_length()
 
@@ -109,7 +135,7 @@ def test_torch_stft(
     assert_allclose(spec_asteroid, torch_spec, rtol=RTOL, atol=ATOL)
 
     try:
-        wav_back = torch.istft(
+        wav_back = istft3d(
             spec,
             n_fft=n_fft,
             hop_length=hop_length,
