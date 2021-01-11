@@ -26,7 +26,7 @@ def to_asteroid(x):
 @pytest.mark.parametrize("normalized", [False])  # True unsupported
 @pytest.mark.parametrize("sample_rate", [8000.0])  # No impact
 @pytest.mark.parametrize("pass_length", [True])
-@pytest.mark.parametrize("wav_shape", [(8000,)])
+@pytest.mark.parametrize("wav_shape", [(8000,), (2, 1, 8000)])
 def test_torch_stft(
     n_fft_next_pow,
     hop_ratio,
@@ -69,7 +69,7 @@ def test_torch_stft(
     istft = Decoder(fb)
 
     spec = torch.stft(
-        wav,
+        wav.squeeze(),
         n_fft=n_fft,
         hop_length=hop_length,
         win_length=win_length,
@@ -95,7 +95,8 @@ def test_torch_stft(
             normalized=normalized,
             onesided=True,
             length=output_len,
-        )
+        ).view(wav_shape)
+
     except RuntimeError:
         # If there was a RuntimeError, the OLA had zeros. So we cannot unit test
         # But we can make sure that istft raises a warning about it.
