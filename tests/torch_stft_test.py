@@ -6,6 +6,30 @@ from asteroid_filterbanks.torch_stft_fb import TorchSTFTFB
 from asteroid_filterbanks import Encoder, Decoder
 
 
+def stft3d(x: torch.Tensor, *args, **kwargs):
+    """Multichannel functional wrapper for torch.stft
+
+    Args:
+        x (Tensor): audio waveform of
+            shape (nb_samples, nb_channels, nb_timesteps)
+    Returns:
+        STFT (Tensor): complex stft of
+            shape (nb_samples, nb_channels, nb_bins, nb_frames, complex=2)
+            last axis is stacked real and imaginary
+    """
+
+    shape = x.size()
+
+    # pack batch
+    x = x.view(-1, shape[-1])
+
+    stft_f = torch.stft(x, *args, **kwargs)
+
+    # unpack batch
+    stft_f = stft_f.view(shape[:-1] + stft_f.shape[-3:])
+    return stft_f
+
+
 def next_power_of_2(x):
     return 1 if x == 0 else 2 ** (x - 1).bit_length()
 
@@ -26,7 +50,7 @@ def to_asteroid(x):
 @pytest.mark.parametrize("normalized", [False])  # True unsupported
 @pytest.mark.parametrize("sample_rate", [8000.0])  # No impact
 @pytest.mark.parametrize("pass_length", [True])
-@pytest.mark.parametrize("wav_shape", [(8000,), (2, 1, 8000)])
+@pytest.mark.parametrize("wav_shape", [(8000,), (2, 3, 8000)])
 def test_torch_stft(
     n_fft_next_pow,
     hop_ratio,
@@ -68,8 +92,8 @@ def test_torch_stft(
     stft = Encoder(fb)
     istft = Decoder(fb)
 
-    spec = torch.stft(
-        wav.squeeze(),
+    spec = stft3d(
+        wav,
         n_fft=n_fft,
         hop_length=hop_length,
         win_length=win_length,
@@ -95,7 +119,7 @@ def test_torch_stft(
             normalized=normalized,
             onesided=True,
             length=output_len,
-        ).view(wav_shape)
+        )
 
     except RuntimeError:
         # If there was a RuntimeError, the OLA had zeros. So we cannot unit test
