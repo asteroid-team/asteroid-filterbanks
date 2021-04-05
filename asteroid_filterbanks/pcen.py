@@ -1,6 +1,7 @@
 from torch import nn
 import torch
 from . import transforms
+from typing import Union, TypedDict
 
 
 class ExponentialMovingAverage(nn.Module):
@@ -13,16 +14,16 @@ class ExponentialMovingAverage(nn.Module):
     ):
         super().__init__()
         if per_channel:
-            self._weights = nn.Parameter(
+            self.weights = nn.Parameter(
                 torch.full((n_channels,), fill_value=smooth), requires_grad=trainable
             )
         else:
-            self._weights = nn.Parameter(
+            self.weights = nn.Parameter(
                 torch.full((1,), fill_value=smooth), requires_grad=trainable
             )
 
     def forward(self, mag_spec, initial_state):
-        weights = torch.clamp(self._weights, 0.0, 1.0)
+        weights = torch.clamp(self.weights, 0.0, 1.0)
         accumulator = initial_state
         out = None
         for x in torch.split(mag_spec, 1, dim=-1):
@@ -34,65 +35,107 @@ class ExponentialMovingAverage(nn.Module):
         return out
 
 
+class TrainableParameters(TypedDict):
+    alpha: bool
+    delta: bool
+    root: bool
+    smooth: bool
+
+
 class PCEN(nn.Module):
     """
-    Per-Channel Energy Normalization
+    Per-Channel Energy Normalization Transformer
 
-    Example implementations:
+    Args:
+        alpha (float):
+            Defaults to 0.96
+        delta (float):
+            Defaults to 2.0
+        root (float):
+            Defualts to 2.0
+        floor (float):
+            Defaults to 1e-6
+        smooth (float):
+            Defaults to 0.04
+        n_channels (int):
+            Defaults to 2
+        trainable: (bool or )
+            If fine-grain control is needed, you can control which individual parameters are
+            trainable by passing a dictionary of booleans, with the key matching either
+            "alpha", "delta", "root", "smooth"
+            i.e. `{"alpha": False, "delta": True, "root": False, "smooth": True}`
 
-    https://github.com/google-research/leaf-audio/blob/master/leaf_audio/postprocessing.py#L142
-    https://github.com/denfed/leaf-audio-pytorch/blob/main/leaf_audio_pytorch/postprocessing.py#L57
-    https://github.com/f0k/ismir2018/blob/51067ca1b098307b8e12891445e9dd4aed96eab5/experiments/model.py
+            Defaults to False
+        per_channel_smoothing: (bool):
+            Defaults to False
 
-    [1] - https://arxiv.org/pdf/1607.05666.pdf
+    References
+        [1] :  https://arxiv.org/pdf/1607.05666.pdf
     """
 
     def __init__(
         self,
         alpha: float = 0.96,
-        smooth: float = 0.04,
         delta: float = 2.0,
         root: float = 2.0,
         floor: float = 1e-6,
-        trainable: bool = False,
-        per_channel_smoothing: bool = False,
+        smooth: float = 0.04,
         n_channels: int = 2,
+        trainable: Union[bool, TrainableParameters] = False,
+        per_channel_smoothing: bool = False,
     ):
         super().__init__()
 
+        if trainable is True or trainable is False:
+            trainable = TrainableParameters(
+                alpha=trainable, delta=trainable, root=trainable, smooth=trainable
+            )
+
         self.floor = floor
         self.alpha = nn.Parameter(
-            torch.full((n_channels,), fill_value=alpha), requires_grad=trainable
+            torch.full((n_channels,), fill_value=alpha), requires_grad=trainable["alpha"]
         )
         self.delta = nn.Parameter(
-            torch.full((n_channels,), fill_value=delta), requires_grad=trainable
+            torch.full((n_channels,), fill_value=delta), requires_grad=trainable["delta"]
         )
         self.root = nn.Parameter(
-            torch.full((n_channels,), fill_value=root), requires_grad=trainable
+            torch.full((n_channels,), fill_value=root), requires_grad=trainable["root"]
         )
 
         self.ema = ExponentialMovingAverage(
             smooth=smooth,
             per_channel=per_channel_smoothing,
             n_channels=n_channels,
-            trainable=trainable,
+            trainable=trainable["smooth"],
         )
 
-    def forward(self, spec: torch.Tensor):
-        """
+    def forward(self, tf_rep: torch.Tensor):
+        """Computes the PCEN from a complex frequency representation.
+
+        Args:
+            tf_rep: (:class:`torch.Tensor`): A complex time frequency representation to compute the
+
+        Shapes
+            >>> (batch, n_channels, freq, time) -> (batch, n_channels, freq // 2 + 1, time)
         [batch_size, n_channels, n_fft, timestep]
         """
-        mag_spec = transforms.mag(spec, dim=-2)
+        if not transforms.is_asteroid_complex(tf_rep):
+            raise AssertionError(
+                f"Expected a tensor of shape (batch, n_channels, freq, time) but instead for {tf_rep.shape}."
+            )
+        mag_spec = transforms.mag(tf_rep, dim=-2)
+
+        if len(tf_rep.shape) == 3:
+            # If n_channels is 1, add a single dimension to keep the shape consistent with multi-channels
+            mag_spec = mag_spec.unsqueeze(1)
 
         alpha = torch.min(self.alpha, torch.tensor(1.0))
         root = torch.max(self.root, torch.tensor(1.0))
         one_over_root = 1.0 / root
-
-        initial_state = mag_spec[:, :, :, 0:1]
+        initial_state = mag_spec[:, :, :, 0].unsqueeze(-1)
         ema_smoother = self.ema(mag_spec, initial_state=initial_state)
         out = (
             mag_spec.transpose(1, -1) / (self.floor + ema_smoother.transpose(1, -1)) ** alpha
             + self.delta
         ) ** one_over_root - self.delta ** one_over_root
-
         return out.transpose(1, -1)
