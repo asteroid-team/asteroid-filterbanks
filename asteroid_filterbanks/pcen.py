@@ -3,12 +3,17 @@ import torch
 from . import transforms
 from typing import Union
 
+try:
+    from typing import TypedDict
+except ImportError:  # Fallback for >= Python 3.7
+    from typing_extensions import TypedDict
+
 
 class ExponentialMovingAverage(nn.Module):
     """
     Computes the exponential moving average of an sequential input.
 
-    Heavily inspired by leaf-audio's tensorflow implementation
+    Influenced by leaf-audio's tensorflow implementation
         https://github.com/google-research/leaf-audio/blob/7ead2f9fe65da14c693c566fe8259ccaaf14129d/leaf_audio/postprocessing.py#L27
 
     See license here
@@ -45,10 +50,6 @@ class ExponentialMovingAverage(nn.Module):
         return out
 
 
-try:
-    from typing import TypedDict
-except ImportError:
-    from typing_extensions import TypedDict
 class TrainableParameters(TypedDict):
     alpha: bool
     delta: bool
@@ -57,48 +58,40 @@ class TrainableParameters(TypedDict):
 
 
 class PCEN(nn.Module):
-    """
-        Per-Channel Energy Normalization as described in [1].
+    """Per-Channel Energy Normalization as described in [1].
 
-        PCEN is the use of an automatic gain control based dynamic compression to replace the widely used static compression.
-        Optional, the parameters can be trained.
+    This applies a fixed or learnable normalization by an exponential moving average smoother, and a compression.
 
-        Can
-            This applies a fixed or learnable normalization by an exponential moving
-    average smoother, and a compression.
+    Args:
+        alpha: The AGC strength (or gain normalization strength) (α in the paper).
+            Defaults to 0.96
+        delta: Bias added before compression (δ in the paper).
+            Defaults to 2.0
+        root: One over exponent applied for compression (r in the paper).
+            Defaults to 2.0
+        floor: Offset added to compression, prevents division by zero. (ϵ in the paper)
+            Defaults to 1e-6
+        smooth: Smoothing coefficient (s in the paper).
+            Defaults to 0.04
+        n_channels: Number of channels in the time frequency representation.
+            Defaults to 2
+        trainable: If True, the parameters (alpha, delta, root and smooth) are trainable. If False, the parameters are fixed.
+            Individual parameters can set to be fixed or trainable by passing a dictionary of booleans, with the key
+            matching the parameter name and the value being either True (trainable) or False (fixed).
+            i.e. ``{"alpha": False, "delta": True, "root": False, "smooth": True}``
+            Defaults to False
+        per_channel_smoothing: If True, means each channel has it's own smooth coefficient.
+            Defaults to False
 
-        Args:
-            alpha (float): exponent of EMA smoother
-                Defaults to 0.96
-            delta (float):
-                Defaults to 2.0
-            root (float):
-                Defualts to 2.0
-            floor (float):
-                Defaults to 1e-6
-            smooth (float):
-                Defaults to 0.04
-            n_channels (int):
-                Defaults to 2
-            trainable: (bool or )
-                If fine-grain control is needed, you can control which individual parameters are
-                trainable by passing a dictionary of booleans, with the key matching either
-                "alpha", "delta", "root", "smooth"
-                i.e. `{"alpha": False, "delta": True, "root": False, "smooth": True}`
+    References
+        [1]: Wang, Y., et al. "Trainable Frontend For Robust and Far-Field Keyword Spotting”, arXiv e-prints, 2016.
+             https://arxiv.org/pdf/1607.05666.pdf
 
-                Defaults to False
-            per_channel_smoothing: (bool):
-                Defaults to False
+    Influenced by leaf-audio's tensorflow implementation
+        https://github.com/google-research/leaf-audio/blob/7ead2f9fe65da14c693c566fe8259ccaaf14129d/leaf_audio/postprocessing.py
 
-        References
-            [1]: Wang, Y., et al. "Trainable Frontend For Robust and Far-Field Keyword Spotting”, arXiv e-prints, 2016.
-                 https://arxiv.org/pdf/1607.05666.pdf
-
-        Heavily inspired by leaf-audio's tensorflow implementation
-            https://github.com/google-research/leaf-audio/blob/7ead2f9fe65da14c693c566fe8259ccaaf14129d/leaf_audio/postprocessing.py
-
-        See license here
-            https://github.com/google-research/leaf-audio/blob/master/LICENSE
+    See license here
+        https://github.com/google-research/leaf-audio/blob/master/LICENSE
     """
 
     def __init__(
@@ -119,7 +112,6 @@ class PCEN(nn.Module):
                 alpha=trainable, delta=trainable, root=trainable, smooth=trainable
             )
 
-        self.floor = floor
         self.alpha = nn.Parameter(
             torch.full((n_channels,), fill_value=alpha), requires_grad=trainable["alpha"]
         )
@@ -130,6 +122,7 @@ class PCEN(nn.Module):
             torch.full((n_channels,), fill_value=root), requires_grad=trainable["root"]
         )
 
+        self.floor = floor
         self.ema = ExponentialMovingAverage(
             smooth=smooth,
             per_channel=per_channel_smoothing,
@@ -153,7 +146,7 @@ class PCEN(nn.Module):
         mag_spec = transforms.mag(tf_rep, dim=-2)
 
         if len(tf_rep.shape) == 3:
-            # If n_channels is 1, add a single dimension to keep the shape consistent with multi-channels
+            # If n_channels is 1, add a single dimension to keep the shape consistent with multichannel shapes.
             mag_spec = mag_spec.unsqueeze(1)
 
         alpha = torch.min(self.alpha, torch.tensor(1.0))
