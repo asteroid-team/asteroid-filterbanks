@@ -29,13 +29,9 @@ class ExponentialMovingAverage(nn.Module):
     ):
         super().__init__()
         if per_channel:
-            self.weights = nn.Parameter(
-                torch.full((n_channels,), fill_value=smooth), requires_grad=trainable
-            )
+            self.weights = nn.Parameter(torch.full((n_channels,), fill_value=smooth), requires_grad=trainable)
         else:
-            self.weights = nn.Parameter(
-                torch.full((1,), fill_value=smooth), requires_grad=trainable
-            )
+            self.weights = nn.Parameter(torch.full((1,), fill_value=smooth), requires_grad=trainable)
 
     def forward(self, mag_spec, initial_state):
         weights = torch.clamp(self.weights, 0.0, 1.0)
@@ -108,19 +104,11 @@ class PCEN(nn.Module):
         super().__init__()
 
         if trainable is True or trainable is False:
-            trainable = TrainableParameters(
-                alpha=trainable, delta=trainable, root=trainable, smooth=trainable
-            )
+            trainable = TrainableParameters(alpha=trainable, delta=trainable, root=trainable, smooth=trainable)
 
-        self.alpha = nn.Parameter(
-            torch.full((n_channels,), fill_value=alpha), requires_grad=trainable["alpha"]
-        )
-        self.delta = nn.Parameter(
-            torch.full((n_channels,), fill_value=delta), requires_grad=trainable["delta"]
-        )
-        self.root = nn.Parameter(
-            torch.full((n_channels,), fill_value=root), requires_grad=trainable["root"]
-        )
+        self.alpha = nn.Parameter(torch.full((n_channels,), fill_value=alpha), requires_grad=trainable["alpha"])
+        self.delta = nn.Parameter(torch.full((n_channels,), fill_value=delta), requires_grad=trainable["delta"])
+        self.root = nn.Parameter(torch.full((n_channels,), fill_value=root), requires_grad=trainable["root"])
 
         self.floor = floor
         self.ema = ExponentialMovingAverage(
@@ -156,7 +144,6 @@ class PCEN(nn.Module):
         ema_smoother = self.ema(mag_spec, initial_state=initial_state)
         # Equation (1) in [1]
         out = (
-            mag_spec.transpose(1, -1) / (self.floor + ema_smoother.transpose(1, -1)) ** alpha
-            + self.delta
+            mag_spec.transpose(1, -1) / (self.floor + ema_smoother.transpose(1, -1)) ** alpha + self.delta
         ) ** one_over_root - self.delta ** one_over_root
         return out.transpose(1, -1)
