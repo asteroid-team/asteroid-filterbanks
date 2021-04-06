@@ -24,7 +24,7 @@ class ExponentialMovingAverage(nn.Module):
         self,
         smooth: float = 0.04,
         per_channel: bool = False,
-        n_channels: int = 2,
+        n_channels: int = 1,
         trainable: bool = False,
     ):
         super().__init__()
@@ -109,7 +109,7 @@ class PCEN(nn.Module):
         root: float = 2.0,
         floor: float = 1e-6,
         smooth: float = 0.04,
-        n_channels: int = 2,
+        n_channels: int = 1,
         trainable: Union[bool, TrainableParameters] = False,
         per_channel_smoothing: bool = False,
     ):
