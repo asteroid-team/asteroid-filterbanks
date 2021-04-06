@@ -1,7 +1,7 @@
 from torch import nn
 import torch
 from . import transforms
-from typing import Union, TypedDict
+from typing import Union
 
 
 class ExponentialMovingAverage(nn.Module):
@@ -45,11 +45,16 @@ class ExponentialMovingAverage(nn.Module):
         return out
 
 
-class TrainableParameters(TypedDict):
-    alpha: bool
-    delta: bool
-    root: bool
-    smooth: bool
+try:
+    from typing import TypedDict
+    class TrainableParameters(TypedDict):
+        alpha: bool
+        delta: bool
+        root: bool
+        smooth: bool
+except ImportError:
+    from typing import Dict
+    TrainableParameters: Dict[str, bool]
 
 
 class PCEN(nn.Module):
