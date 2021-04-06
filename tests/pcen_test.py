@@ -59,3 +59,16 @@ def test_pcen_init():
 
     assert_allclose(pcen.ema.weights.data, torch.tensor([2.0, 2.0]))
     assert pcen.ema.weights.requires_grad is False
+
+
+@pytest.mark.parametrize("n_channels", [1, 2, 4])
+@pytest.mark.parametrize("batch_size", [1, 10])
+@pytest.mark.parametrize("n_filters", [128, 512])
+@pytest.mark.parametrize("timesteps", [1, 10])
+def test_pcen_trainable(n_channels, batch_size, n_filters, timesteps):
+    tf_rep = torch.randn((batch_size, n_channels, n_filters, timesteps))
+
+    pcen = PCEN(trainable=True, n_channels=n_channels)
+    energy_rep = pcen(tf_rep)
+
+    energy_rep.mean().backward()
