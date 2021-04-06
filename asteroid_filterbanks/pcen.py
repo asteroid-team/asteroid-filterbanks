@@ -1,7 +1,7 @@
 from torch import nn
 import torch
 from . import transforms
-from typing import Union, Optional
+from typing import Union, Optional, Tuple
 
 try:
     from typing import TypedDict
@@ -37,7 +37,9 @@ class ExponentialMovingAverage(nn.Module):
                 torch.full((1,), fill_value=smooth), requires_grad=trainable
             )
 
-    def forward(self, mag_spec, initial_state):
+    def forward(
+        self, mag_spec: torch.Tensor, initial_state: torch.Tensor
+    ) -> Tuple[torch.tensor, torch.Tensor]:
         weights = torch.clamp(self.weights, 0.0, 1.0)
         accumulator = initial_state
         out = None
@@ -138,7 +140,9 @@ class PCEN(nn.Module):
             trainable=trainable["smooth"],
         )
 
-    def forward(self, tf_rep: torch.Tensor, initial_state: Optional[torch.Tensor] = None):
+    def forward(
+        self, tf_rep: torch.Tensor, initial_state: Optional[torch.Tensor] = None
+    ) -> Tuple[torch.tensor, torch.Tensor]:
         """Computes the PCEN from a complex frequency representation.
 
         Args:
