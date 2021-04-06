@@ -47,14 +47,13 @@ class ExponentialMovingAverage(nn.Module):
 
 try:
     from typing import TypedDict
-    class TrainableParameters(TypedDict):
-        alpha: bool
-        delta: bool
-        root: bool
-        smooth: bool
 except ImportError:
-    from typing import Dict
-    TrainableParameters: Dict[str, bool]
+    from typing_extensions import TypedDict
+class TrainableParameters(TypedDict):
+    alpha: bool
+    delta: bool
+    root: bool
+    smooth: bool
 
 
 class PCEN(nn.Module):
