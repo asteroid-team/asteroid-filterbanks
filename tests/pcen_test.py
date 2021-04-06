@@ -3,6 +3,7 @@ from asteroid_filterbanks import Encoder, Decoder, STFTFB
 from asteroid_filterbanks.pcen import PCEN, ExponentialMovingAverage
 from torch.testing import assert_allclose
 import pytest
+import re
 
 
 @pytest.mark.parametrize("n_channels", [1, 2, 4])
@@ -15,23 +16,9 @@ def test_ema(n_channels, batch_size, n_filters, timesteps):
     mag_spec = torch.randn(batch_size, n_channels, n_filters, timesteps)
     initial_state = mag_spec[:, :, :, 0:1]
 
-    out = ema(mag_spec, initial_state)
+    out, hidden = ema(mag_spec, initial_state)
     assert out.shape == (batch_size, n_channels, n_filters, timesteps)
-
-
-@pytest.mark.parametrize("n_channels", [1, 2, 4])
-@pytest.mark.parametrize("batch_size", [1, 10])
-def test_pcen(n_channels, batch_size):
-    audio = torch.randn(batch_size, n_channels, 16000 * 10)
-
-    fb = STFTFB(kernel_size=256, n_filters=256, stride=128)
-    enc = Encoder(fb)
-    tf_rep = enc(audio)
-
-    pcen = PCEN(n_channels=n_channels)
-    energy = pcen(tf_rep)
-
-    assert energy.shape == (batch_size, n_channels, 256 // 2 + 1, 1249)
+    assert hidden.shape == (batch_size, n_channels, n_filters, 1)
 
 
 def test_pcen_init():
@@ -63,12 +50,73 @@ def test_pcen_init():
 
 @pytest.mark.parametrize("n_channels", [1, 2, 4])
 @pytest.mark.parametrize("batch_size", [1, 10])
+def test_pcen(n_channels, batch_size):
+    audio = torch.randn(batch_size, n_channels, 16000 * 10)
+
+    fb = STFTFB(kernel_size=256, n_filters=256, stride=128)
+    enc = Encoder(fb)
+    tf_rep = enc(audio)
+
+    pcen = PCEN(n_channels=n_channels)
+    energy, hidden = pcen(tf_rep)
+
+    assert energy.shape == (batch_size, n_channels, 256 // 2 + 1, 1249)
+    assert hidden.shape == (batch_size, n_channels, 256 // 2 + 1, 1)
+
+
+@pytest.mark.parametrize("n_channels", [1, 2, 4])
+@pytest.mark.parametrize("batch_size", [1, 10])
+@pytest.mark.parametrize("n_filters", [128, 512])
+@pytest.mark.parametrize("timesteps", [3, 10])
+def test_pcen_hidden_state(n_channels, batch_size, n_filters, timesteps):
+    pcen = PCEN(n_channels=n_channels)
+
+    tf_rep = torch.randn((batch_size, n_channels, n_filters, timesteps))
+
+    tf_rep_1, tf_rep_2 = torch.chunk(tf_rep, 2, dim=-1)
+
+    energy_1, hidden = pcen(tf_rep_1)
+    energy_2, hidden = pcen(tf_rep_2, hidden)
+    energy = torch.cat((energy_1, energy_2), dim=-1)
+
+    expected_energy, expected_hidden = pcen(tf_rep)
+    assert_allclose(expected_energy, energy)
+    assert_allclose(expected_hidden, hidden)
+
+
+@pytest.mark.parametrize("n_channels", [1, 2, 4])
+@pytest.mark.parametrize("batch_size", [1, 10])
 @pytest.mark.parametrize("n_filters", [128, 512])
 @pytest.mark.parametrize("timesteps", [1, 10])
 def test_pcen_trainable(n_channels, batch_size, n_filters, timesteps):
     tf_rep = torch.randn((batch_size, n_channels, n_filters, timesteps))
 
     pcen = PCEN(trainable=True, n_channels=n_channels)
-    energy_rep = pcen(tf_rep)
+    energy_rep, _ = pcen(tf_rep)
 
     energy_rep.mean().backward()
+
+
+def test_pcen_forward_shape_is_asteroid_complex():
+    pcen = PCEN(trainable=True, n_channels=2)
+
+    with pytest.raises(
+        AssertionError,
+        match=re.escape("Expected a complex-like tensor of shape (batch, n_channels, freq, time)."),
+    ):
+        pcen(torch.randn(10, 1, 1, 1))
+
+
+@pytest.mark.parametrize("n_channels", [1, 2, 4])
+@pytest.mark.parametrize("batch_size", [1, 10])
+@pytest.mark.parametrize("n_filters", [128, 512])
+@pytest.mark.parametrize("timesteps", [1, 10])
+def test_pcen_jit(n_channels, batch_size, n_filters, timesteps):
+    tf_rep = torch.randn((batch_size, n_channels, n_filters, timesteps))
+    pcen = PCEN(trainable=True, n_channels=n_channels)
+    traced = torch.jit.trace(pcen, tf_rep)
+    with torch.no_grad():
+        native_out, native_hidden = pcen(tf_rep)
+        jit_out, jit_hidden = traced(tf_rep)
+        assert_allclose(native_out, jit_out)
+        assert_allclose(native_hidden, jit_hidden)

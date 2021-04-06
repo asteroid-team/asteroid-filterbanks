@@ -1,7 +1,7 @@
 from torch import nn
 import torch
 from . import transforms
-from typing import Union
+from typing import Union, Optional
 
 try:
     from typing import TypedDict
@@ -47,7 +47,7 @@ class ExponentialMovingAverage(nn.Module):
                 out = accumulator
             else:
                 out = torch.cat((out, accumulator), dim=-1)
-        return out
+        return out, accumulator
 
 
 class TrainableParameters(TypedDict):
@@ -74,14 +74,22 @@ class PCEN(nn.Module):
         smooth: Smoothing coefficient (s in the paper).
             Defaults to 0.04
         n_channels: Number of channels in the time frequency representation.
-            Defaults to 2
+            Defaults to 1
         trainable: If True, the parameters (alpha, delta, root and smooth) are trainable. If False, the parameters are fixed.
             Individual parameters can set to be fixed or trainable by passing a dictionary of booleans, with the key
             matching the parameter name and the value being either True (trainable) or False (fixed).
             i.e. ``{"alpha": False, "delta": True, "root": False, "smooth": True}``
             Defaults to False
-        per_channel_smoothing: If True, means each channel has it's own smooth coefficient.
+        per_channel_smoothing: If True, each channel has it's own smoothing coefficient.
             Defaults to False
+
+    Examples
+        >>> audio = torch.randn(10, 2, 16_000)
+        >>> fb = STFTFB(kernel_size=256, n_filters=256, stride=128)
+        >>> enc = Encoder(fb)
+        >>> tf_rep = enc(audio)
+        >>> pcen = PCEN(n_channels=2)
+        >>> energy = pcen(tf_rep)
 
     References
         [1]: Wang, Y., et al. "Trainable Frontend For Robust and Far-Field Keyword Spotting”, arXiv e-prints, 2016.
@@ -130,18 +138,23 @@ class PCEN(nn.Module):
             trainable=trainable["smooth"],
         )
 
-    def forward(self, tf_rep: torch.Tensor):
+    def forward(self, tf_rep: torch.Tensor, initial_state: Optional[torch.Tensor] = None):
         """Computes the PCEN from a complex frequency representation.
 
         Args:
-            tf_rep: (:class:`torch.Tensor`): A complex time frequency representation to compute the
+            tf_rep: A tensor containing an asteroid complex time frequency representation.
+            initial_state: A tensor containing the initial hidden state.
+                If set to None, defaults to the first element by time (dim=-1) in the tf_rep tensor.
+                Defaults to None
 
         Shapes
-            >>> (batch, n_channels, freq, time) -> (batch, n_channels, freq // 2 + 1, time)
+            >>> (batch, n_channels, freq, time), None -> (batch, n_channels, freq // 2 + 1, time), (batch_size, n_channel, freq // 2 + 1, 1)
+            >>> (batch, n_channels, freq, time), (batch_size, n_channel, freq // 2 + 1, 1) -> (batch, n_channels, freq // 2 + 1, time), (batch_size, n_channel, freq // 2 + 1, 1)
+
         """
         if not transforms.is_asteroid_complex(tf_rep):
             raise AssertionError(
-                f"Expected a tensor of shape (batch, n_channels, freq, time) but instead for {tf_rep.shape}."
+                f"Expected a complex-like tensor of shape (batch, n_channels, freq, time)."
             )
         mag_spec = transforms.mag(tf_rep, dim=-2)
 
@@ -149,14 +162,16 @@ class PCEN(nn.Module):
             # If n_channels is 1, add a single dimension to keep the shape consistent with multichannel shapes.
             mag_spec = mag_spec.unsqueeze(1)
 
+        if initial_state is None:
+            initial_state = mag_spec[:, :, :, 0].unsqueeze(-1)
+
         alpha = torch.min(self.alpha, torch.tensor(1.0))
         root = torch.max(self.root, torch.tensor(1.0))
         one_over_root = 1.0 / root
-        initial_state = mag_spec[:, :, :, 0].unsqueeze(-1)
-        ema_smoother = self.ema(mag_spec, initial_state=initial_state)
+        ema_smoother, hidden_state = self.ema(mag_spec, initial_state=initial_state)
         # Equation (1) in [1]
         out = (
             mag_spec.transpose(1, -1) / (self.floor + ema_smoother.transpose(1, -1)) ** alpha
             + self.delta
         ) ** one_over_root - self.delta ** one_over_root
-        return out.transpose(1, -1)
+        return out.transpose(1, -1), hidden_state
