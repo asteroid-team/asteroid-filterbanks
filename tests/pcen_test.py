@@ -111,9 +111,10 @@ def test_pcen_forward_shape_is_asteroid_complex():
 @pytest.mark.parametrize("batch_size", [1, 10])
 @pytest.mark.parametrize("n_filters", [128, 512])
 @pytest.mark.parametrize("timesteps", [1, 10])
-def test_pcen_jit(n_channels, batch_size, n_filters, timesteps):
+@pytest.mark.parametrize("trainable", [True, False])
+def test_pcen_jit(n_channels, batch_size, n_filters, timesteps, trainable):
     tf_rep = torch.randn((batch_size, n_channels, n_filters, timesteps))
-    pcen = PCEN(trainable=True, n_channels=n_channels)
+    pcen = PCEN(trainable=trainable, n_channels=n_channels)
     traced = torch.jit.trace(pcen, tf_rep)
     with torch.no_grad():
         native_out, native_hidden = pcen(tf_rep)
