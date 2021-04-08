@@ -37,6 +37,7 @@ setup(
     install_requires=[
         "numpy",
         "torch",
+        "typing_extensions"
     ],
     extras_require={
         "all": ["librosa", "scipy"],
