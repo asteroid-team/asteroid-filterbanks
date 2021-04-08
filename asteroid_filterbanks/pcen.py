@@ -47,15 +47,11 @@ class ExponentialMovingAverage(nn.Module):
 
         weights = torch.clamp(self.weights, 0.0, 1.0)
         accumulator = initial_state.transpose(1, -1)
-        out = None
+        out = []
         for x in torch.split(mag_spec.transpose(1, -1), 1, dim=1):
             accumulator = weights * x + (1.0 - weights) * accumulator
-            accumulator = accumulator
-            if out is None:
-                out = accumulator.transpose(1, -1)
-            else:
-                out = torch.cat((out, accumulator.transpose(1, -1)), dim=-1)
-        return out, accumulator.transpose(1, -1)
+            out.append(accumulator.transpose(1, -1))
+        return torch.cat(out, dim=-1), accumulator.transpose(1, -1)
 
 
 class TrainableParameters(TypedDict):
@@ -108,20 +104,26 @@ class _PCEN(nn.Module):
     def forward(
         self, mag_spec: torch.Tensor, initial_state: Optional[torch.Tensor] = None
     ) -> Tuple[torch.Tensor, torch.Tensor]:
+        post_squeeze = False
         if len(mag_spec.shape) == 3:
             # If n_channels is 1, add a single dimension to keep the shape consistent with multichannel shapes.
             mag_spec = mag_spec.unsqueeze(1)
+            post_squeeze = True
 
         alpha = torch.min(self.alpha, torch.tensor(1.0))
         root = torch.max(self.root, torch.tensor(1.0))
         one_over_root = 1.0 / root
         ema_smoother, hidden_state = self.ema(mag_spec, initial_state)
+        mag_spec = mag_spec.transpose(1, -1)
+        ema_smoother = ema_smoother.transpose(1, -1)
         # Equation (1) in [1]
         out = (
-            mag_spec.transpose(1, -1) / (self.floor + ema_smoother.transpose(1, -1)) ** alpha
-            + self.delta
+            mag_spec / (self.floor + ema_smoother) ** alpha + self.delta
         ) ** one_over_root - self.delta ** one_over_root
-        return out.transpose(1, -1), hidden_state
+        out = out.transpose(1, -1)
+        if post_squeeze:
+            out = out.squeeze(1)
+        return out, hidden_state
 
 
 class PCEN(_PCEN):
@@ -183,7 +185,7 @@ class PCEN(_PCEN):
 
         Shapes
             >>> (batch, n_channels, freq, time) -> (batch, n_channels, freq, time)
-            >>> (batch, freq, time) -> (batch, 1, freq, time) # Assumed to be mono-channel
+            >>> (batch, freq, time) -> (batch, freq, time) # Assumed to be mono-channel
 
         """
         return super().forward(mag_spec, None)[0]
@@ -261,7 +263,7 @@ class StatefulPCEN(_PCEN):
                 Defaults to None
         Shapes
             >>> (batch, n_channels, freq, time) -> (batch, n_channels, freq, time), (batch_size, n_channel, freq, 1)
-            >>> (batch, freq, time) -> (batch, 1, freq, time), , (batch_size, n_channel, freq, 1) # Assumed to be mono-channel
+            >>> (batch, freq, time) -> (batch, freq, time), (batch_size, 1, freq, 1) # Assumed to be mono-channel
 
         References
             [1]: Wang, Y., et al. "Trainable Frontend For Robust and Far-Field Keyword Spotting”, arXiv e-prints, 2016.

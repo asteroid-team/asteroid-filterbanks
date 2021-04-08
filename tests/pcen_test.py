@@ -63,7 +63,8 @@ def test_pcen_forward(n_channels, batch_size):
     pcen = PCEN(n_channels=n_channels)
     energy = pcen(mag_spec)
 
-    assert energy.shape == (batch_size, n_channels, 256 // 2 + 1, 1249)
+    expected_shape = mag_spec.shape
+    assert energy.shape == expected_shape
 
 
 @pytest.mark.parametrize("n_channels", [1, 2, 4])
