@@ -445,23 +445,3 @@ def phase_centerfreq_correction(
     tmp = torch.arange(freq).unsqueeze(-1) * torch.arange(frames)[None]
     correction = -2 * tmp * stride * math.pi / kernel_size
     return phase + correction
-
-
-@mark_deprecated(None, None)
-def take_reim(x, dim: int = -2):
-    return x
-
-
-@mark_deprecated("Please use `asteroid.filterbanks.transforms.mag` instead.", None)
-def take_mag(*args, **kwargs):
-    return mag(*args, **kwargs)
-
-
-@mark_deprecated("Please use `asteroid.filterbanks.transforms.magreim` instead.", None)
-def take_cat(*args, **kwargs):
-    return magreim(*args, **kwargs)
-
-
-@mark_deprecated("Please use `asteroid.filterbanks.transforms.from_magphase` instead.", None)
-def from_mag_and_phase(*args, **kwargs):
-    return from_magphase(*args, **kwargs)
