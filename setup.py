@@ -34,11 +34,7 @@ setup(
     long_description_content_type="text/markdown",
     license="MIT",
     python_requires=">=3.6",
-    install_requires=[
-        "numpy",
-        "torch",
-        "typing_extensions"
-    ],
+    install_requires=["numpy", "torch>=1.8.0", "typing_extensions"],
     extras_require={
         "all": ["librosa", "scipy"],
     },
