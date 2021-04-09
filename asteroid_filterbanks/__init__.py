@@ -8,7 +8,7 @@ from .griffin_lim import griffin_lim, misi
 from .multiphase_gammatone_fb import MultiphaseGammatoneFB
 from .melgram_fb import MelGramFB
 
-__version__ = "0.3.4"
+__version__ = "0.4.0dev"
 
 
 def make_enc_dec(
