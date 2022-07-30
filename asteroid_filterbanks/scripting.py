@@ -2,6 +2,20 @@ import functools
 import torch
 
 
+global SCRIPT_ENABLED
+SCRIPT_ENABLED = True
+
+
+def disable_script_if_tracing():
+    global SCRIPT_ENABLED
+    SCRIPT_ENABLED = False
+
+
+def enable_script_if_tracing():
+    global SCRIPT_ENABLED
+    SCRIPT_ENABLED = True
+
+
 def is_tracing():
     # Taken for pytorch for compat in 1.6.0
     """
@@ -32,7 +46,7 @@ def script_if_tracing(fn):
 
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
-        if not is_tracing():
+        if not is_tracing() or not SCRIPT_ENABLED:
             # Not tracing, don't do anything
             return fn(*args, **kwargs)
 
