@@ -84,7 +84,7 @@ def generate_mpgtf(samplerate_hz, len_sec, n_filters):
 
 
 def gammatone_impulse_response(samplerate_hz, len_sec, center_freq_hz, phase_shift):
-    """ Generate single parametrized gammatone filter """
+    """Generate single parametrized gammatone filter"""
     p = 2  # filter order
     erb = 24.7 + 0.108 * center_freq_hz  # equivalent rectangular bandwidth
     divisor = (np.pi * np.math.factorial(2 * p - 2) * np.power(2, float(-(2 * p - 2)))) / np.square(
@@ -104,13 +104,13 @@ def gammatone_impulse_response(samplerate_hz, len_sec, center_freq_hz, phase_shi
 
 
 def erb_scale_2_freq_hz(freq_erb):
-    """ Convert frequency on ERB scale to frequency in Hertz """
+    """Convert frequency on ERB scale to frequency in Hertz"""
     freq_hz = (np.exp(freq_erb / 9.265) - 1) * 24.7 * 9.265
     return freq_hz
 
 
 def freq_hz_2_erb_scale(freq_hz):
-    """ Convert frequency in Hertz to frequency on ERB scale """
+    """Convert frequency in Hertz to frequency on ERB scale"""
     freq_erb = 9.265 * np.log(1 + freq_hz / (24.7 * 9.265))
     return freq_erb
 
