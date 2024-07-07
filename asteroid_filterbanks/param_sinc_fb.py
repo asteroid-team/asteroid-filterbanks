@@ -68,7 +68,7 @@ class ParamSincFB(Filterbank):
         self.register_buffer("n_", n_)
 
     def _initialize_filters(self):
-        """ Filter Initialization along the Mel scale"""
+        """Filter Initialization along the Mel scale"""
         low_hz = 30
         high_hz = self.sample_rate / 2 - (self.min_low_hz + self.min_band_hz)
         mel = np.linspace(
@@ -80,7 +80,7 @@ class ParamSincFB(Filterbank):
         self.band_hz_ = nn.Parameter(torch.from_numpy(np.diff(hz)).view(-1, 1))
 
     def filters(self):
-        """ Compute filters from parameters """
+        """Compute filters from parameters"""
         low = self.min_low_hz + torch.abs(self.low_hz_)
         high = torch.clamp(
             low + self.min_band_hz + torch.abs(self.band_hz_), self.min_low_hz, self.sample_rate / 2
@@ -116,7 +116,7 @@ class ParamSincFB(Filterbank):
         return 700 * (10 ** (mel / 2595) - 1)
 
     def get_config(self):
-        """ Returns dictionary of arguments to re-instantiate the class."""
+        """Returns dictionary of arguments to re-instantiate the class."""
         config = {
             "min_low_hz": self.min_low_hz,
             "min_band_hz": self.min_band_hz,

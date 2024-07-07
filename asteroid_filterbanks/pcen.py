@@ -119,7 +119,7 @@ class _PCEN(nn.Module):
         # Equation (1) in [1]
         out = (
             mag_spec / (self.floor + ema_smoother) ** alpha + self.delta
-        ) ** one_over_root - self.delta ** one_over_root
+        ) ** one_over_root - self.delta**one_over_root
         out = out.transpose(1, -1)
         if post_squeeze:
             out = out.squeeze(1)
