@@ -128,6 +128,7 @@ def test_torch_stft(
         pad_mode=pad_mode,
         normalized=normalized,
         onesided=True,
+        return_complex=True,
     )
 
     spec_asteroid = stft(wav)
@@ -145,6 +146,7 @@ def test_torch_stft(
             normalized=normalized,
             onesided=True,
             length=output_len,
+            return_complex=True,
         )
 
     except RuntimeError:
