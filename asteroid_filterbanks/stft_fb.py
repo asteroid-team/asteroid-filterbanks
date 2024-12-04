@@ -92,7 +92,7 @@ def perfect_synthesis_window(analysis_window, hop_size):
 
     loop_on = (win_size - 1) // hop_size
     for win_idx in range(-loop_on, loop_on + 1):
-        shifted = np.roll(analysis_window ** 2, win_idx * hop_size)
+        shifted = np.roll(analysis_window**2, win_idx * hop_size)
         if win_idx < 0:
             shifted[win_idx * hop_size :] = 0
         elif win_idx > 0:

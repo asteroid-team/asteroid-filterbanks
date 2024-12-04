@@ -39,8 +39,8 @@ def make_encoder_from(fb_class, config):
 
 
 def test_mag_mask(encoder_list):
-    """ Assert identity mask works. """
-    for (enc, fb_dim) in encoder_list:
+    """Assert identity mask works."""
+    for enc, fb_dim in encoder_list:
         tf_rep = enc(torch.randn(2, 1, 8000))  # [batch, freq, time]
         id_mag_mask = torch.ones((1, fb_dim // 2, 1))
         masked = transforms.apply_mag_mask(tf_rep, id_mag_mask, dim=1)
@@ -48,8 +48,8 @@ def test_mag_mask(encoder_list):
 
 
 def test_reim_mask(encoder_list):
-    """ Assert identity mask works. """
-    for (enc, fb_dim) in encoder_list:
+    """Assert identity mask works."""
+    for enc, fb_dim in encoder_list:
         tf_rep = enc(torch.randn(2, 1, 8000))  # [batch, freq, time]
         id_reim_mask = torch.ones((1, fb_dim, 1))
         masked = transforms.apply_real_mask(tf_rep, id_reim_mask, dim=1)
@@ -57,8 +57,8 @@ def test_reim_mask(encoder_list):
 
 
 def test_comp_mask(encoder_list):
-    """ Assert identity mask works. """
-    for (enc, fb_dim) in encoder_list:
+    """Assert identity mask works."""
+    for enc, fb_dim in encoder_list:
         tf_rep = enc(torch.randn(2, 1, 8000))  # [batch, freq, time]
         id_complex_mask = torch.cat(
             (torch.ones((1, fb_dim // 2, 1)), torch.zeros((1, fb_dim // 2, 1))), dim=1
@@ -68,7 +68,7 @@ def test_comp_mask(encoder_list):
 
 
 def test_mag(encoder_list):
-    for (enc, fb_dim) in encoder_list:
+    for enc, fb_dim in encoder_list:
         tf_rep = enc(torch.randn(2, 1, 16000))  # [batch, freq, time]
         batch, freq, time = tf_rep.shape
         mag = transforms.mag(tf_rep, dim=1)
@@ -76,7 +76,7 @@ def test_mag(encoder_list):
 
 
 def test_cat(encoder_list):
-    for (enc, fb_dim) in encoder_list:
+    for enc, fb_dim in encoder_list:
         tf_rep = enc(torch.randn(2, 1, 16000))  # [batch, freq, time]
         batch, freq, time = tf_rep.shape
         mag = transforms.magreim(tf_rep, dim=1)
@@ -89,7 +89,7 @@ def test_cat(encoder_list):
 )
 @pytest.mark.parametrize("dim", [0, 1, 2])
 def test_to_numpy(np_torch_tuple, dim):
-    """ Test torch --> np conversion (right angles)"""
+    """Test torch --> np conversion (right angles)"""
     from_np, from_torch = np_torch_tuple
     if dim == 0:
         np_array = np.array(from_np)
@@ -112,7 +112,7 @@ def test_to_numpy(np_torch_tuple, dim):
 )
 @pytest.mark.parametrize("dim", [0, 1, 2])
 def test_from_numpy(np_torch_tuple, dim):
-    """ Test np --> torch conversion (right angles)"""
+    """Test np --> torch conversion (right angles)"""
     from_np, from_torch = np_torch_tuple
     if dim == 0:
         np_array = np.array(from_np)
@@ -131,7 +131,7 @@ def test_from_numpy(np_torch_tuple, dim):
 
 @pytest.mark.parametrize("dim", [0, 1, 2, 3])
 def test_return_ticket_np_torch(dim):
-    """ Test torch --> np --> torch --> np conversion"""
+    """Test torch --> np --> torch --> np conversion"""
     max_tested_ndim = 4
     # Random tensor shape
     tensor_shape = [random.randint(1, 10) for _ in range(max_tested_ndim)]
@@ -149,7 +149,7 @@ def test_return_ticket_np_torch(dim):
 
 @pytest.mark.parametrize("dim", [0, 1, 2, 3])
 def test_angle_mag_recompostion(dim):
-    """ Test complex --> (mag, angle) --> complex conversions"""
+    """Test complex --> (mag, angle) --> complex conversions"""
     max_tested_ndim = 4
     # Random tensor shape
     tensor_shape = [random.randint(1, 10) for _ in range(max_tested_ndim)]
@@ -164,7 +164,7 @@ def test_angle_mag_recompostion(dim):
 
 @pytest.mark.parametrize("dim", [0, 1, 2, 3])
 def test_check_complex_error(dim):
-    """ Test error in angle """
+    """Test error in angle"""
     not_complex = torch.randn(3, 5, 7, 9, 15)
     with pytest.raises(AssertionError):
         transforms.check_complex(not_complex, dim=dim)

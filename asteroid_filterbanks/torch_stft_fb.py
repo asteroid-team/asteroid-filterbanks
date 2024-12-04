@@ -129,15 +129,15 @@ class TorchSTFTFB(STFTFB):
 
 @script_if_tracing
 def _restore_freqs_an(spec, n_filters: int):
-    spec[..., 0, :] *= 2 ** 0.5
-    spec[..., n_filters // 2, :] *= 2 ** 0.5
+    spec[..., 0, :] *= 2**0.5
+    spec[..., n_filters // 2, :] *= 2**0.5
     return spec
 
 
 @script_if_tracing
 def _restore_freqs_syn(spec, n_filters: int):
-    spec[..., 0, :] /= 2 ** 0.5
-    spec[..., n_filters // 2, :] /= 2 ** 0.5
+    spec[..., 0, :] /= 2**0.5
+    spec[..., n_filters // 2, :] /= 2**0.5
     return spec
 
 
