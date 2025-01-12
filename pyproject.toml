@@ -1,8 +1,49 @@
 [build-system]
-requires = [
-    "setuptools",
-    "wheel",
+requires = ["setuptools"]
+
+[project]
+name = "asteroid-filterbanks"
+authors = [
+    {name = "Manuel Pariente", email="pariente.mnl@gmail.com"}
 ]
+description = "Asteroid's filterbanks"
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "torch>=1.8.0",
+    "typing-extensions",
+]
+dynamic = [
+    "readme",
+    "version",
+]
+
+[project.optional-dependencies]
+all = [
+    "librosa",
+    "scipy",
+]
+
+[tool.setuptools]
+packages = ["asteroid_filterbanks"]
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.md"], content-type = "text/markdown"}
+version = {attr = "asteroid_filterbanks.__version__"}
+
+[project.urls]
+Releases = "https://github.com/asteroid-team/asteroid-filterbanks/releases"
+Repository = "https://github.com/asteroid-team/asteroid-filterbanks"
 
 [tool.black]
 # https://github.com/psf/black
