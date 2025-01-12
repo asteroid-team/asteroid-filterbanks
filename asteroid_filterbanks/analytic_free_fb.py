@@ -9,7 +9,6 @@ try:
     def conj(filt):
         return torch.stack([filt[:, :, :, 1], -filt[:, :, :, 0]], dim=-1)
 
-
 except ImportError:
     from torch import fft
 

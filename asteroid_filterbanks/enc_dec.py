@@ -34,7 +34,7 @@ class Filterbank(nn.Module):
         self.sample_rate = sample_rate
 
     def filters(self):
-        """ Abstract method for filters. """
+        """Abstract method for filters."""
         raise NotImplementedError
 
     def pre_analysis(self, wav: torch.Tensor):
@@ -97,7 +97,7 @@ class _EncDec(nn.Module):
         return self.filterbank.filters()
 
     def compute_filter_pinv(self, filters):
-        """ Computes pseudo inverse filterbank of given filters."""
+        """Computes pseudo inverse filterbank of given filters."""
         scale = self.filterbank.stride / self.filterbank.kernel_size
         shape = filters.shape
         ifilt = torch.pinverse(filters.squeeze()).transpose(-1, -2).view(shape)
@@ -105,14 +105,14 @@ class _EncDec(nn.Module):
         return ifilt * scale
 
     def get_filters(self):
-        """ Returns filters or pinv filters depending on `is_pinv` attribute """
+        """Returns filters or pinv filters depending on `is_pinv` attribute"""
         if self.is_pinv:
             return self.compute_filter_pinv(self.filters())
         else:
             return self.filters()
 
     def get_config(self):
-        """ Returns dictionary of arguments to re-instantiate the class."""
+        """Returns dictionary of arguments to re-instantiate the class."""
         config = {"is_pinv": self.is_pinv}
         base_config = self.filterbank.get_config()
         return dict(list(base_config.items()) + list(config.items()))
@@ -261,7 +261,7 @@ class Decoder(_EncDec):
 
     @classmethod
     def pinv_of(cls, filterbank):
-        """ Returns an Decoder, pseudo inverse of a filterbank or Encoder."""
+        """Returns an Decoder, pseudo inverse of a filterbank or Encoder."""
         if isinstance(filterbank, Filterbank):
             return cls(filterbank, is_pinv=True)
         elif isinstance(filterbank, Encoder):
