@@ -100,7 +100,7 @@ def test_torch_stft(
     window = None if window is None else get_window(window, win_length, fftbins=True)
     if window is not None:
         # Cannot restore the signal without overlap and near to zero window.
-        if hop_ratio == 1 and (window ** 2 < 1e-11).any():
+        if hop_ratio == 1 and (window**2 < 1e-11).any():
             pass
 
     fb = TorchSTFTFB.from_torch_args(
