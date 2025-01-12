@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
-        pytorch-version: ["2.5.1", "nigthly"]
+        pytorch-version: ["2.5.1", "nightly"]
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 10
