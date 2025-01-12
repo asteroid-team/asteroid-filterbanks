@@ -23,7 +23,7 @@ def fb_config_list():
 @pytest.mark.parametrize("fb_class", [FreeFB, AnalyticFreeFB, ParamSincFB, MultiphaseGammatoneFB])
 @pytest.mark.parametrize("fb_config", fb_config_list())
 def test_fb_def_and_forward_lowdim(fb_class, fb_config):
-    """ Test filterbank definition and encoder/decoder forward."""
+    """Test filterbank definition and encoder/decoder forward."""
     # Definition
     enc = Encoder(fb_class(**fb_config))
     dec = Decoder(fb_class(**fb_config))
@@ -50,7 +50,7 @@ def test_fb_def_and_forward_lowdim(fb_class, fb_config):
 @pytest.mark.parametrize("fb_class", [FreeFB, AnalyticFreeFB, ParamSincFB, MultiphaseGammatoneFB])
 @pytest.mark.parametrize("fb_config", fb_config_list())
 def test_fb_def_and_forward_all_dims(fb_class, fb_config):
-    """ Test encoder/decoder on other shapes than 3D"""
+    """Test encoder/decoder on other shapes than 3D"""
     # Definition
     enc = Encoder(fb_class(**fb_config))
     dec = Decoder(fb_class(**fb_config))
@@ -67,7 +67,7 @@ def test_fb_def_and_forward_all_dims(fb_class, fb_config):
 @pytest.mark.parametrize("fb_config", fb_config_list())
 @pytest.mark.parametrize("ndim", [2, 3, 4])
 def test_fb_forward_multichannel(fb_class, fb_config, ndim):
-    """ Test encoder/decoder in multichannel setting"""
+    """Test encoder/decoder in multichannel setting"""
     # Definition
     enc = Encoder(fb_class(**fb_config))
     dec = Decoder(fb_class(**fb_config))
@@ -90,7 +90,7 @@ def test_complexfb_shapes(fb_class, n_filters, kernel_size):
 
 @pytest.mark.parametrize("kernel_size", [256, 257, 128, 129])
 def test_paramsinc_shape(kernel_size):
-    """ ParamSincFB has odd length filters """
+    """ParamSincFB has odd length filters"""
     fb = ParamSincFB(n_filters=200, kernel_size=kernel_size)
     assert fb.filters().shape[-1] == 2 * (kernel_size // 2) + 1
 

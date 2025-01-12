@@ -13,7 +13,7 @@ installing asteroid-filterbanks everytime you change something.
 To do that, install asteroid-filterbanks in develop mode either with pip
 ```pip install -e .[tests]``` or with python ```python setup.py develop```.
 
-To avoid formatting roundtrips in PRs, Asteroid relies on [`black`](https://github.com/psf/black)
+To avoid formatting roundtrips in PRs, Asteroid relies on [`ruff`](https://docs.astral.sh/ruff/)
 and [`pre-commit-hooks`](https://github.com/pre-commit/pre-commit-hooks) to handle formatting
 for us. You'll need to install `requirements.txt` and install git hooks with
 `pre-commit install`.
@@ -26,7 +26,7 @@ git clone your_fork_url
 cd asteroid-filterbanks
 pip install -r requirements.txt
 pip install -e .
-pre-commit install  # To run black before commit
+pre-commit install  # To run `ruff format` before commit
 
 # Make your changes
 # Test them locally
@@ -62,10 +62,10 @@ docstrings in the codebase for examples.
 ### Coding style
 
 We use [pre-commit hooks](../.pre-commit-config.yaml) to format the code using
-`black`.
-The code is checked for `black`- and `flake8`- compliance on every commit with
-GitHub actions. Remember, continuous integration is not here to be all green,
-be to help us see where to improve !
+`ruff format`.
+The code is checked for compliance with `ruff check` and `ruff format` on every
+commit with GitHub actions. Remember, continuous integration is not here to be
+all green, be to help us see where to improve!
 
 
 If you have any question, [open an issue][issue] or [join the slack][slack],

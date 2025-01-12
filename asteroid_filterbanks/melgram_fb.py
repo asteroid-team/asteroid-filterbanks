@@ -37,7 +37,6 @@ class MelGramFB(STFTFB):
         norm="slaney",
         **kwargs,
     ):
-
         self.n_mels = n_mels
         self.fmin = fmin
         self.fmax = fmax
@@ -50,9 +49,7 @@ class MelGramFB(STFTFB):
             sample_rate=sample_rate,
             **kwargs,
         )
-        self.mel_scale = MelScale(
-            n_filters, sample_rate=sample_rate, n_mels=n_mels, fmin=fmin, fmax=fmax, norm=norm
-        )
+        self.mel_scale = MelScale(n_filters, sample_rate=sample_rate, n_mels=n_mels, fmin=fmin, fmax=fmax, norm=norm)
         self.n_feats_out = n_mels
 
     def post_analysis(self, spec: torch.Tensor):
@@ -90,9 +87,7 @@ class MelScale(torch.nn.Module):
         from librosa.filters import mel
 
         super().__init__()
-        fb_mat = mel(
-            sr=sample_rate, n_fft=n_filters, fmin=fmin, fmax=fmax, n_mels=n_mels, norm=norm
-        )
+        fb_mat = mel(sr=sample_rate, n_fft=n_filters, fmin=fmin, fmax=fmax, n_mels=n_mels, norm=norm)
         self.register_buffer("fb_mat", torch.from_numpy(fb_mat).unsqueeze(0))
 
     def forward(self, spec: torch.Tensor):

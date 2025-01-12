@@ -55,36 +55,27 @@ class ParamSincFB(Filterbank):
         self.n_feats_out = 2 * self.cutoff
         self._initialize_filters()
         if n_filters % 2 != 0:
-            print(
-                "If the number of filters `n_filters` is odd, the "
-                "output size of the layer will be `n_filters - 1`."
-            )
+            print("If the number of filters `n_filters` is odd, the output size of the layer will be `n_filters - 1`.")
 
         window_ = np.hamming(self.kernel_size)[: self.half_kernel]  # Half window
-        n_ = (
-            2 * np.pi * (torch.arange(-self.half_kernel, 0.0).view(1, -1) / self.sample_rate)
-        )  # Half time vector
+        n_ = 2 * np.pi * (torch.arange(-self.half_kernel, 0.0).view(1, -1) / self.sample_rate)  # Half time vector
         self.register_buffer("window_", torch.from_numpy(window_).float())
         self.register_buffer("n_", n_)
 
     def _initialize_filters(self):
-        """ Filter Initialization along the Mel scale"""
+        """Filter Initialization along the Mel scale"""
         low_hz = 30
         high_hz = self.sample_rate / 2 - (self.min_low_hz + self.min_band_hz)
-        mel = np.linspace(
-            self.to_mel(low_hz), self.to_mel(high_hz), self.n_filters // 2 + 1, dtype="float32"
-        )
+        mel = np.linspace(self.to_mel(low_hz), self.to_mel(high_hz), self.n_filters // 2 + 1, dtype="float32")
         hz = self.to_hz(mel)
         # filters parameters (out_channels // 2, 1)
         self.low_hz_ = nn.Parameter(torch.from_numpy(hz[:-1]).view(-1, 1))
         self.band_hz_ = nn.Parameter(torch.from_numpy(np.diff(hz)).view(-1, 1))
 
     def filters(self):
-        """ Compute filters from parameters """
+        """Compute filters from parameters"""
         low = self.min_low_hz + torch.abs(self.low_hz_)
-        high = torch.clamp(
-            low + self.min_band_hz + torch.abs(self.band_hz_), self.min_low_hz, self.sample_rate / 2
-        )
+        high = torch.clamp(low + self.min_band_hz + torch.abs(self.band_hz_), self.min_low_hz, self.sample_rate / 2)
         cos_filters = self.make_filters(low, high, filt_type="cos")
         sin_filters = self.make_filters(low, high, filt_type="sin")
         return torch.cat([cos_filters, sin_filters], dim=0)
@@ -116,7 +107,7 @@ class ParamSincFB(Filterbank):
         return 700 * (10 ** (mel / 2595) - 1)
 
     def get_config(self):
-        """ Returns dictionary of arguments to re-instantiate the class."""
+        """Returns dictionary of arguments to re-instantiate the class."""
         config = {
             "min_low_hz": self.min_low_hz,
             "min_band_hz": self.min_band_hz,

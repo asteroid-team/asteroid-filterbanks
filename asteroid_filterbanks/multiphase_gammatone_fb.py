@@ -48,9 +48,7 @@ def generate_mpgtf(samplerate_hz, len_sec, n_filters):
     current_center_freq_hz = center_freq_hz_min
 
     # Determine number of phase shifts per center frequency
-    phase_pair_count = (np.ones(n_center_freqs) * np.floor(n_filters / 2 / n_center_freqs)).astype(
-        int
-    )
+    phase_pair_count = (np.ones(n_center_freqs) * np.floor(n_filters / 2 / n_center_freqs)).astype(int)
     remaining_phase_pairs = ((n_filters - np.sum(phase_pair_count) * 2) / 2).astype(int)
     if remaining_phase_pairs > 0:
         phase_pair_count[:remaining_phase_pairs] = phase_pair_count[:remaining_phase_pairs] + 1
@@ -70,48 +68,39 @@ def generate_mpgtf(samplerate_hz, len_sec, n_filters):
             index = index + 1
 
         # Second half of filters: phase_shifts in [pi, 2*pi)
-        filterbank[index : index + phase_pair_count[i], :] = -filterbank[
-            index - phase_pair_count[i] : index, :
-        ]
+        filterbank[index : index + phase_pair_count[i], :] = -filterbank[index - phase_pair_count[i] : index, :]
 
         # Prepare for next center frequency
         index = index + phase_pair_count[i]
-        current_center_freq_hz = erb_scale_2_freq_hz(
-            freq_hz_2_erb_scale(current_center_freq_hz) + 1
-        )
+        current_center_freq_hz = erb_scale_2_freq_hz(freq_hz_2_erb_scale(current_center_freq_hz) + 1)
 
     filterbank = normalize_filters(filterbank)
     return filterbank
 
 
 def gammatone_impulse_response(samplerate_hz, len_sec, center_freq_hz, phase_shift):
-    """ Generate single parametrized gammatone filter """
+    """Generate single parametrized gammatone filter"""
     p = 2  # filter order
     erb = 24.7 + 0.108 * center_freq_hz  # equivalent rectangular bandwidth
-    divisor = (np.pi * math.factorial(2 * p - 2) * np.power(2, float(-(2 * p - 2)))) / np.square(
-        math.factorial(p - 1)
-    )
+    divisor = (np.pi * math.factorial(2 * p - 2) * np.power(2, float(-(2 * p - 2)))) / np.square(math.factorial(p - 1))
     b = erb / divisor  # bandwidth parameter
     a = 1.0  # amplitude. This is varied later by the normalization process.
     len_sample = int(np.floor(samplerate_hz * len_sec))
     t = np.linspace(1.0 / samplerate_hz, len_sec, len_sample)
     gammatone_ir = (
-        a
-        * np.power(t, p - 1)
-        * np.exp(-2 * np.pi * b * t)
-        * np.cos(2 * np.pi * center_freq_hz * t + phase_shift)
+        a * np.power(t, p - 1) * np.exp(-2 * np.pi * b * t) * np.cos(2 * np.pi * center_freq_hz * t + phase_shift)
     )
     return gammatone_ir
 
 
 def erb_scale_2_freq_hz(freq_erb):
-    """ Convert frequency on ERB scale to frequency in Hertz """
+    """Convert frequency on ERB scale to frequency in Hertz"""
     freq_hz = (np.exp(freq_erb / 9.265) - 1) * 24.7 * 9.265
     return freq_hz
 
 
 def freq_hz_2_erb_scale(freq_hz):
-    """ Convert frequency in Hertz to frequency on ERB scale """
+    """Convert frequency in Hertz to frequency on ERB scale"""
     freq_erb = 9.265 * np.log(1 + freq_hz / (24.7 * 9.265))
     return freq_erb
 

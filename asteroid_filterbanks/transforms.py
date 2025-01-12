@@ -3,7 +3,6 @@ import torch
 from typing import Tuple
 
 from .scripting import script_if_tracing
-from .deprecation import mark_deprecated
 
 
 def mul_c(inp, other, dim: int = -2):
@@ -287,8 +286,7 @@ def check_torchaudio_complex(tensor):
     """
     if not is_torchaudio_complex(tensor):
         raise AssertionError(
-            f"Tensor of shape {tensor.shape} is not Torchaudio-style complex-like"
-            "(expected last dimension to be == 2)"
+            f"Tensor of shape {tensor.shape} is not Torchaudio-style complex-like(expected last dimension to be == 2)"
         )
 
 

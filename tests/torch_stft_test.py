@@ -100,7 +100,7 @@ def test_torch_stft(
     window = None if window is None else get_window(window, win_length, fftbins=True)
     if window is not None:
         # Cannot restore the signal without overlap and near to zero window.
-        if hop_ratio == 1 and (window ** 2 < 1e-11).any():
+        if hop_ratio == 1 and (window**2 < 1e-11).any():
             pass
 
     fb = TorchSTFTFB.from_torch_args(
@@ -160,9 +160,7 @@ def test_torch_stft(
         # Asteroid always returns a longer signal.
         assert wav_back_asteroid.shape[-1] >= wav_back.shape[-1]
         # The unit test is done on the left part of the signal.
-        assert_allclose(
-            wav_back_asteroid[: wav_back.shape[-1]], wav_back.float(), rtol=RTOL, atol=ATOL
-        )
+        assert_allclose(wav_back_asteroid[: wav_back.shape[-1]], wav_back.float(), rtol=RTOL, atol=ATOL)
 
 
 def test_raises_if_onesided_is_false():

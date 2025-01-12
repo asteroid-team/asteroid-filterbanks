@@ -1,6 +1,5 @@
 from torch import nn
 import torch
-from . import transforms
 from typing import Union, Optional, Tuple
 
 try:
@@ -76,9 +75,7 @@ class _PCEN(nn.Module):
         super().__init__()
 
         if trainable is True or trainable is False:
-            trainable = TrainableParameters(
-                alpha=trainable, delta=trainable, root=trainable, smooth=trainable
-            )
+            trainable = TrainableParameters(alpha=trainable, delta=trainable, root=trainable, smooth=trainable)
 
         self.trainable = trainable
         self.n_channels = n_channels
@@ -89,9 +86,7 @@ class _PCEN(nn.Module):
         self.delta = nn.Parameter(
             torch.full((self.n_channels,), fill_value=delta), requires_grad=self.trainable["delta"]
         )
-        self.root = nn.Parameter(
-            torch.full((self.n_channels,), fill_value=root), requires_grad=self.trainable["root"]
-        )
+        self.root = nn.Parameter(torch.full((self.n_channels,), fill_value=root), requires_grad=self.trainable["root"])
 
         self.floor = floor
         self.ema = ExponentialMovingAverage(
@@ -119,7 +114,7 @@ class _PCEN(nn.Module):
         # Equation (1) in [1]
         out = (
             mag_spec / (self.floor + ema_smoother) ** alpha + self.delta
-        ) ** one_over_root - self.delta ** one_over_root
+        ) ** one_over_root - self.delta**one_over_root
         out = out.transpose(1, -1)
         if post_squeeze:
             out = out.squeeze(1)
@@ -144,9 +139,9 @@ class PCEN(_PCEN):
             Defaults to 0.04
         n_channels: Number of channels in the time frequency representation.
             Defaults to 1
-        trainable: If True, the parameters (alpha, delta, root and smooth) are trainable. If False, the parameters are fixed.
-            Individual parameters can set to be fixed or trainable by passing a dictionary of booleans, with the key
-            matching the parameter name and the value being either True (trainable) or False (fixed).
+        trainable: If True, the parameters (alpha, delta, root and smooth) are trainable. If False, the parameters are
+            fixed. Individual parameters can set to be fixed or trainable by passing a dictionary of booleans, with the
+            key matching the parameter name and the value being either True (trainable) or False (fixed).
             i.e. ``{"alpha": False, "delta": True, "root": False, "smooth": True}``
             Defaults to False
         per_channel_smoothing: If True, each channel has it's own smoothing coefficient.
@@ -211,9 +206,9 @@ class StatefulPCEN(_PCEN):
             Defaults to 0.04
         n_channels: Number of channels in the time frequency representation.
             Defaults to 1
-        trainable: If True, the parameters (alpha, delta, root and smooth) are trainable. If False, the parameters are fixed.
-            Individual parameters can set to be fixed or trainable by passing a dictionary of booleans, with the key
-            matching the parameter name and the value being either True (trainable) or False (fixed).
+        trainable: If True, the parameters (alpha, delta, root and smooth) are trainable. If False, the parameters are
+            fixed. Individual parameters can set to be fixed or trainable by passing a dictionary of booleans, with the
+            key matching the parameter name and the value being either True (trainable) or False (fixed).
             i.e. ``{"alpha": False, "delta": True, "root": False, "smooth": True}``
             Defaults to False
         per_channel_smoothing: If True, each channel has it's own smoothing coefficient.
@@ -254,7 +249,8 @@ class StatefulPCEN(_PCEN):
     def forward(
         self, mag_spec: torch.Tensor, initial_state: Optional[torch.Tensor] = None
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Computes the PCEN from magnitude spectrum representation, and an optional smoothed version of the filterbank (Equation (2) in [1]).
+        """Computes the PCEN from magnitude spectrum representation, and an optional smoothed version of the filterbank
+           (Equation (2) in [1]).
 
         Args:
             mag_spec: tensor containing an magnitude spectrum representation.

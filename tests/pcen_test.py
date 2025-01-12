@@ -1,9 +1,8 @@
 import torch
-from asteroid_filterbanks import Encoder, Decoder, STFTFB, transforms
+from asteroid_filterbanks import Encoder, STFTFB, transforms
 from asteroid_filterbanks.pcen import PCEN, StatefulPCEN, ExponentialMovingAverage
 from torch.testing import assert_allclose
 import pytest
-import re
 
 
 @pytest.mark.parametrize("n_channels", [2, 4])
@@ -163,9 +162,7 @@ def test_stateful_pcen_jit(n_channels, batch_size, n_filters, timesteps, trainab
 @pytest.mark.parametrize("timesteps", [3, 10])
 @pytest.mark.parametrize("per_channel_smoothing", [True, False])
 @pytest.mark.parametrize("trainable", [True, False])
-def test_stateful_pcen_from_pcen(
-    n_channels, batch_size, n_filters, timesteps, per_channel_smoothing, trainable
-):
+def test_stateful_pcen_from_pcen(n_channels, batch_size, n_filters, timesteps, per_channel_smoothing, trainable):
     mag_spec = torch.randn(batch_size, n_channels, n_filters, timesteps)
 
     pcen = PCEN(

@@ -21,9 +21,7 @@ class STFTFB(Filterbank):
         n_feats_out (int): Number of output filters.
     """
 
-    def __init__(
-        self, n_filters, kernel_size, stride=None, window=None, sample_rate=8000.0, **kwargs
-    ):
+    def __init__(self, n_filters, kernel_size, stride=None, window=None, sample_rate=8000.0, **kwargs):
         super().__init__(n_filters, kernel_size, stride=stride, sample_rate=sample_rate)
         assert n_filters >= kernel_size
         if n_filters % 2 != 0:
@@ -38,9 +36,7 @@ class STFTFB(Filterbank):
                 window = window.data.numpy()
             ws = window.size
             if not (ws == kernel_size):
-                raise AssertionError(
-                    f"Expected window of size {kernel_size}. Received {ws} instead."
-                )
+                raise AssertionError(f"Expected window of size {kernel_size}. Received {ws} instead.")
             self.window = window
         # Create and normalize DFT filters (can be overcomplete)
         filters = np.fft.fft(np.eye(n_filters))
@@ -50,9 +46,7 @@ class STFTFB(Filterbank):
         lpad = int((n_filters - kernel_size) // 2)
         rpad = int(n_filters - kernel_size - lpad)
         indexes = list(range(lpad, n_filters - rpad))
-        filters = np.vstack(
-            [np.real(filters[: self.cutoff, indexes]), np.imag(filters[: self.cutoff, indexes])]
-        )
+        filters = np.vstack([np.real(filters[: self.cutoff, indexes]), np.imag(filters[: self.cutoff, indexes])])
 
         filters[0, :] /= np.sqrt(2)
         filters[n_filters // 2, :] /= np.sqrt(2)
@@ -92,7 +86,7 @@ def perfect_synthesis_window(analysis_window, hop_size):
 
     loop_on = (win_size - 1) // hop_size
     for win_idx in range(-loop_on, loop_on + 1):
-        shifted = np.roll(analysis_window ** 2, win_idx * hop_size)
+        shifted = np.roll(analysis_window**2, win_idx * hop_size)
         if win_idx < 0:
             shifted[win_idx * hop_size :] = 0
         elif win_idx > 0:

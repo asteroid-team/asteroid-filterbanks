@@ -26,9 +26,7 @@ def mark_deprecated(message, version=None):
         def wrapped(*args, **kwargs):
             from_what = "a future release" if version is None else f"asteroid v{version}"
             warn_message = (
-                f"{func.__module__}.{func.__name__} has been deprecated "
-                f"and will be removed from {from_what}. "
-                f"{message}"
+                f"{func.__module__}.{func.__name__} has been deprecated and will be removed from {from_what}. {message}"
             )
             warnings.warn(warn_message, VisibleDeprecationWarning, stacklevel=2)
             return func(*args, **kwargs)
