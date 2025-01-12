@@ -2,7 +2,7 @@ import torch
 import math
 from typing import Optional, List
 
-from . import Encoder, Decoder, STFTFB
+from . import Decoder, STFTFB
 from .stft_fb import perfect_synthesis_window
 from . import transforms
 

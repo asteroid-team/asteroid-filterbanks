@@ -1,9 +1,8 @@
 import torch
-from asteroid_filterbanks import Encoder, Decoder, STFTFB, transforms
+from asteroid_filterbanks import Encoder, STFTFB, transforms
 from asteroid_filterbanks.pcen import PCEN, StatefulPCEN, ExponentialMovingAverage
 from torch.testing import assert_allclose
 import pytest
-import re
 
 
 @pytest.mark.parametrize("n_channels", [2, 4])

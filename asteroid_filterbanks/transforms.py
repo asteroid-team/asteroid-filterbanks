@@ -3,7 +3,6 @@ import torch
 from typing import Tuple
 
 from .scripting import script_if_tracing
-from .deprecation import mark_deprecated
 
 
 def mul_c(inp, other, dim: int = -2):
