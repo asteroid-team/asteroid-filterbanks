@@ -10,33 +10,34 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6]  #, 3.7, 3.8]
+        python-version: ["3.12"]
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 10
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+
+    - name: Install the latest version of uv
+      uses: astral-sh/setup-uv@v5
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Install python dependencies
       run: |
-        python -m pip install --upgrade --user pip --quiet
-        python -m pip install -r requirements.txt --quiet
+        uv pip install -r requirements.txt
         python --version
-        pip --version
-        python -m pip list
+        uv --version
+        uv tree
       shell: bash
 
     - name: Test against torch.stft
       run: |
-        coverage run -a -m py.test tests/torch_stft_test.py
+        coverage run --append --module pytest \
+          tests/torch_stft_test.py
 
     - name: Coverage report
       run: |
-        coverage report -m
+        coverage report --show-missing
         coverage xml -o coverage.xml
 
     - name: Codecov upload
