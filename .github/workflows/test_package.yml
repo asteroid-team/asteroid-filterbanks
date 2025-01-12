@@ -9,16 +9,18 @@ jobs:
     name: unit-tests
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python-version: [3.6]  #, 3.7, 3.8]
-        pytorch-version: ["1.8.0", "nightly"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        pytorch-version: ["2.5.1", "nigthly"]
 
     # Timeout: https://stackoverflow.com/a/59076067/4521646
     timeout-minutes: 10
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+
+    - name: Install the latest version of uv
+      uses: astral-sh/setup-uv@v5
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -27,28 +29,26 @@ jobs:
         sudo apt update
         sudo apt install libsndfile1-dev libsndfile1
 
-    - name: Install python dependencies
+    - name: Install Python dependencies
       run: |
-        python -m pip install --upgrade --user pip --quiet
-        if [ $TORCH_INSTALL == "1.8.0" ]; then
-          INSTALL="torch==1.8.0+cpu torchaudio==0.8.0 -f https://download.pytorch.org/whl/torch_stable.html"
+        if [ "${{ matrix.pytorch-version }}" == "nightly" ]; then
+          uv pip install --prerelease=allow torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cpu
         else
-          INSTALL="--pre torch torchvision torchaudio -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html"
+          uv pip install torch==${{ matrix.pytorch-version }} torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
         fi
-        python -m pip install $INSTALL
-        python -m pip install -r requirements.txt --quiet
+        uv pip install --requirements requirements.txt
         python --version
-        pip --version
-        python -m pip list
+        uv --version
+        uv tree
       shell: bash
 
     - name: Source code tests
       run: |
-        coverage run -a -m py.test tests --ignore tests/torch_stft_test.py
+        coverage run --append --module pytest tests --ignore tests/torch_stft_test.py
 
     - name: Coverage report
       run: |
-        coverage report -m
+        coverage report --show-missing
         coverage xml -o coverage.xml
 
     - name: Codecov upload
