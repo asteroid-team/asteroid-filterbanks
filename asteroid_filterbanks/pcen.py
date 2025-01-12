@@ -76,9 +76,7 @@ class _PCEN(nn.Module):
         super().__init__()
 
         if trainable is True or trainable is False:
-            trainable = TrainableParameters(
-                alpha=trainable, delta=trainable, root=trainable, smooth=trainable
-            )
+            trainable = TrainableParameters(alpha=trainable, delta=trainable, root=trainable, smooth=trainable)
 
         self.trainable = trainable
         self.n_channels = n_channels
@@ -89,9 +87,7 @@ class _PCEN(nn.Module):
         self.delta = nn.Parameter(
             torch.full((self.n_channels,), fill_value=delta), requires_grad=self.trainable["delta"]
         )
-        self.root = nn.Parameter(
-            torch.full((self.n_channels,), fill_value=root), requires_grad=self.trainable["root"]
-        )
+        self.root = nn.Parameter(torch.full((self.n_channels,), fill_value=root), requires_grad=self.trainable["root"])
 
         self.floor = floor
         self.ema = ExponentialMovingAverage(
@@ -119,7 +115,7 @@ class _PCEN(nn.Module):
         # Equation (1) in [1]
         out = (
             mag_spec / (self.floor + ema_smoother) ** alpha + self.delta
-        ) ** one_over_root - self.delta ** one_over_root
+        ) ** one_over_root - self.delta**one_over_root
         out = out.transpose(1, -1)
         if post_squeeze:
             out = out.squeeze(1)

@@ -287,8 +287,7 @@ def check_torchaudio_complex(tensor):
     """
     if not is_torchaudio_complex(tensor):
         raise AssertionError(
-            f"Tensor of shape {tensor.shape} is not Torchaudio-style complex-like"
-            "(expected last dimension to be == 2)"
+            f"Tensor of shape {tensor.shape} is not Torchaudio-style complex-like(expected last dimension to be == 2)"
         )
 
 

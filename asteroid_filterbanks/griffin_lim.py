@@ -154,9 +154,7 @@ def misi(
         complex_specgram = transforms.from_magphase(mag_specgrams, angles)
         wavs = istft_dec(complex_specgram)
         # Make wavs sum up to the mixture
-        consistent_wavs = _mixture_consistency(
-            mixture_wav, wavs, src_weights=src_weights, dim=wav_dim
-        )
+        consistent_wavs = _mixture_consistency(mixture_wav, wavs, src_weights=src_weights, dim=wav_dim)
         # Back to TF domain
         rebuilt = stft_enc(consistent_wavs)
         # Update phase estimates (with momentum). Keep the momentum here
@@ -216,7 +214,7 @@ def _mixture_consistency(
         all_dims: List[int] = torch.arange(est_sources.ndim).tolist()
         all_dims.pop(dim)  # Remove source axis
         all_dims.pop(0)  # Remove batch axis
-        src_weights = torch.mean(est_sources ** 2, dim=all_dims, keepdim=True)
+        src_weights = torch.mean(est_sources**2, dim=all_dims, keepdim=True)
     # Make sure that the weights sum up to 1
     norm_weights = torch.sum(src_weights, dim=dim, keepdim=True) + 1e-8
     src_weights = src_weights / norm_weights
@@ -233,7 +231,7 @@ def _mixture_consistency(
         raise RuntimeError(
             f"The size of the mixture tensor should match the "
             f"size of the est_sources tensor. Expected mixture"
-            f"tensor to have {n} or {n-1} dimension, found {m}."
+            f"tensor to have {n} or {n - 1} dimension, found {m}."
         )
     # Compute remove
     new_sources = est_sources + src_weights * residual

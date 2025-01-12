@@ -24,7 +24,7 @@ def fb_config_list():
 
 @pytest.mark.parametrize("fb_config", fb_config_list())
 def test_stft_def(fb_config):
-    """ Check consistency between two calls."""
+    """Check consistency between two calls."""
     fb = STFTFB(**fb_config)
     enc = Encoder(fb)
     dec = Decoder(fb)
@@ -60,7 +60,7 @@ def test_filter_shape(fb_config):
 
 @pytest.mark.parametrize("fb_config", fb_config_list())
 def test_perfect_istft_default_parameters(fb_config):
-    """ Unit test perfect reconstruction with default values. """
+    """Unit test perfect reconstruction with default values."""
     kernel_size = fb_config["kernel_size"]
     enc, dec = make_enc_dec("stft", **fb_config)
     inp_wav = torch.randn(2, 1, 32000)
@@ -70,12 +70,10 @@ def test_perfect_istft_default_parameters(fb_config):
 
 
 @pytest.mark.parametrize("fb_config", fb_config_list())
-@pytest.mark.parametrize(
-    "analysis_window_name", ["blackman", "hamming", "hann", "bartlett", "boxcar"]
-)
+@pytest.mark.parametrize("analysis_window_name", ["blackman", "hamming", "hann", "bartlett", "boxcar"])
 @pytest.mark.parametrize("use_torch_window", [True, False])
 def test_perfect_resyn_window(fb_config, analysis_window_name, use_torch_window):
-    """ Unit test perfect reconstruction """
+    """Unit test perfect reconstruction"""
     kernel_size = fb_config["kernel_size"]
     window = get_window(analysis_window_name, kernel_size)
     if use_torch_window:

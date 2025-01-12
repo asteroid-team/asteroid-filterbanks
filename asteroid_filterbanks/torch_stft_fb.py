@@ -53,12 +53,8 @@ class TorchSTFTFB(STFTFB):
         **kwargs,
     ):
         if n_filters != kernel_size:
-            raise NotImplementedError(
-                "Cannot set `n_filters!=kernel_size` in TorchSTFTFB, untested."
-            )
-        super().__init__(
-            n_filters, kernel_size, stride=stride, window=window, sample_rate=sample_rate, **kwargs
-        )
+            raise NotImplementedError("Cannot set `n_filters!=kernel_size` in TorchSTFTFB, untested.")
+        super().__init__(n_filters, kernel_size, stride=stride, window=window, sample_rate=sample_rate, **kwargs)
         self.center = center
         self.pad_mode = pad_mode
         if normalized:
@@ -129,15 +125,15 @@ class TorchSTFTFB(STFTFB):
 
 @script_if_tracing
 def _restore_freqs_an(spec, n_filters: int):
-    spec[..., 0, :] *= 2 ** 0.5
-    spec[..., n_filters // 2, :] *= 2 ** 0.5
+    spec[..., 0, :] *= 2**0.5
+    spec[..., n_filters // 2, :] *= 2**0.5
     return spec
 
 
 @script_if_tracing
 def _restore_freqs_syn(spec, n_filters: int):
-    spec[..., 0, :] /= 2 ** 0.5
-    spec[..., n_filters // 2, :] /= 2 ** 0.5
+    spec[..., 0, :] /= 2**0.5
+    spec[..., n_filters // 2, :] /= 2**0.5
     return spec
 
 
@@ -161,8 +157,7 @@ def ola_with_wdiv(wav, window, kernel_size: int, stride: int, center: bool = Tru
     if min_mask.any() and not torch.jit.is_scripting():
         # Warning instead of error. Might be trimmed afterward.
         warnings.warn(
-            f"Minimum NOLA should be above 1e-11, Found {wsq_ola.abs().min()}. "
-            f"Dividind only where possible.",
+            f"Minimum NOLA should be above 1e-11, Found {wsq_ola.abs().min()}. Dividind only where possible.",
             RuntimeWarning,
         )
     wav[~min_mask] = wav[~min_mask] / wsq_ola[~min_mask]
@@ -177,9 +172,7 @@ def square_ola(window: torch.Tensor, kernel_size: int, stride: int, n_frame: int
 
 
 @script_if_tracing
-def pad_all_shapes(
-    x: torch.Tensor, pad_shape: Tuple[int, int], mode: str = "reflect"
-) -> torch.Tensor:
+def pad_all_shapes(x: torch.Tensor, pad_shape: Tuple[int, int], mode: str = "reflect") -> torch.Tensor:
     if x.ndim == 1:
         return F.pad(x[None, None], pad=pad_shape, mode=mode).squeeze(0).squeeze(0)
     if x.ndim == 2:
